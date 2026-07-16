@@ -1,0 +1,33 @@
+.dashboard {
+    max-width: 1100px;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.dashboard-header h1 {
+    font-size: 34px;
+}
+
+.create-quiz {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.create-quiz input {
+    flex: 1;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    font-size: 16px;
+}
+
+.create-quiz button {
+    width: 180px;
+}
