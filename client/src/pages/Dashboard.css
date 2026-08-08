@@ -31,3 +31,11 @@
 .create-quiz button {
     width: 180px;
 }
+
+.error {
+    margin-bottom: 20px;
+    padding: 12px;
+    border-radius: 8px;
+    background: #fee2e2;
+    color: #b91c1c;
+}

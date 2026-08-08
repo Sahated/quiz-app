@@ -12,38 +12,23 @@ function Dashboard() {
     const [quizzes, setQuizzes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [title, setTitle] = useState("");
+    const [error, setError] = useState("");
 
     const loadQuizzes = async () => {
+        setError("");
 
         try {
             const response = await quizService.getAll();
             setQuizzes(response.data.data);
-        }
-
-        catch (err) {
-            console.log(err);
-        }
-
-        finally {
+        } catch (err) {
+            setError(err.response?.data?.message || "Произошла ошибка");
+        } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        const fetchQuizzes = async () => {
-
-            try {
-                const response = await quizService.getAll();
-                setQuizzes(response.data.data);
-
-            } catch (err) {
-                console.log(err);
-
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchQuizzes();
+        loadQuizzes();
     }, []);
 
     const createQuiz = async () => {
@@ -55,11 +40,11 @@ function Dashboard() {
             });
 
             setTitle("");
-            loadQuizzes();
+            await loadQuizzes();
         }
 
         catch (err) {
-            console.log(err);
+            setError(err.response?.data?.message || "Произошла ошибка");
         }
     };
 
@@ -71,16 +56,16 @@ function Dashboard() {
 
         try {
             await quizService.delete(id);
-            loadQuizzes();
+            await loadQuizzes();
         }
 
         catch (err) {
-            console.log(err);
+            setError(err.response?.data?.message || "Произошла ошибка");
         }
     };
 
     return (
-
+        
         <div className="dashboard">
 
             <div className="dashboard-header">
@@ -100,7 +85,13 @@ function Dashboard() {
                     Создать
                 </Button>
             </div>
-
+            {
+                error && (
+                    <p className="error">
+                        {error}
+                    </p>
+                )
+            }
             {
                 loading ?
                     <p>Загрузка...</p>
