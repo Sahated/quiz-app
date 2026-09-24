@@ -17,6 +17,16 @@ router.post(
 );
 
 router.get(
+    "/:code/game-state",
+    roomController.getGameState
+);
+
+router.get(
+    "/:code/leaderboard",
+    roomController.getLeaderboard
+);
+
+router.get(
     "/:code",
     roomController.getRoom
 );

@@ -9,6 +9,7 @@ import Room from "./pages/Room";
 import Game from "./pages/Game";
 import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
+import JoinGame from "./pages/JoinGame";
 
 import MainLayout from "./layouts/MainLayout";
 
@@ -19,10 +20,15 @@ function App() {
             {/* Public Pages*/}
 
             <Route path="/" element={<Login />} />
-
+            
             <Route
                 path="/register"
                 element={<Register />}
+            />
+
+            <Route 
+                path="/join" 
+                element={<JoinGame />} 
             />
 
             {/* Private part of the app */}
@@ -50,7 +56,7 @@ function App() {
                 />
 
                 <Route
-                    path="/leaderboard"
+                    path="/leaderboard/:code"
                     element={<Leaderboard />}
                 />
 

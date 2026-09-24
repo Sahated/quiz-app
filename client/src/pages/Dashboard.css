@@ -32,6 +32,10 @@
     width: 180px;
 }
 
+.join-game {
+    margin-bottom: 30px;
+}
+
 .error {
     margin-bottom: 20px;
     padding: 12px;

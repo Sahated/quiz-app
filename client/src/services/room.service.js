@@ -23,6 +23,18 @@ class RoomService {
         return api.get(`/rooms/${code}/players`);
     }
 
+    getGameState(code, playerId) {
+        return api.get(`/rooms/${code}/game-state`, {
+            params: {
+                playerId
+            }
+        });
+    }
+
+    getLeaderboard(code) {
+        return api.get(`/rooms/${code}/leaderboard`);
+    }
+
     delete(id) {
         return api.delete(`/rooms/${id}`);
     }

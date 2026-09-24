@@ -1,4 +1,5 @@
 const roomService = require("../services/room.service");
+const gameService = require("../services/game.service");
 
 exports.create = async (req, res) => {
 
@@ -83,6 +84,54 @@ exports.getPlayers = async (req, res) => {
         res.json({
             success: true,
             data: players
+        });
+
+    } catch (err) {
+
+        res.status(err.status || 500).json({
+            success: false,
+            message: err.message
+        });
+
+    }
+
+};
+exports.getGameState = async (req, res) => {
+
+    try {
+
+        const gameState = await gameService.getGameState(
+            req.params.code,
+            req.query.playerId
+        );
+
+        res.json({
+            success: true,
+            data: gameState
+        });
+
+    } catch (err) {
+
+        res.status(err.status || 500).json({
+            success: false,
+            message: err.message
+        });
+
+    }
+
+};
+
+exports.getLeaderboard = async (req, res) => {
+
+    try {
+
+        const leaderboard = await gameService.getLeaderboard(
+            req.params.code
+        );
+
+        res.json({
+            success: true,
+            data: leaderboard
         });
 
     } catch (err) {

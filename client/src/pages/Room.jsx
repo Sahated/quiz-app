@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import roomService from "../services/room.service";
 import socket from "../socket/socket";
@@ -10,13 +10,13 @@ import "./Room.css";
 function Room() {
 
     const { code } = useParams();
+    const navigate = useNavigate();
     const { user } = useAuth();
 
     const [room, setRoom] = useState(null);
     const [players, setPlayers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [nickname, setNickname] = useState("");
 
     const isOwner = user?.id === room?.quiz?.ownerId;
 
@@ -39,18 +39,6 @@ function Room() {
         }
     };
 
-    const handleJoinRoom = () => {
-        if (!nickname.trim()) {
-            setError("Введите ник.");
-            return;
-        }
-
-        socket.emit("join-room", {
-            code,
-            nickname: nickname.trim(),
-        });
-    };
-
     const handleStartGame = () => {
         socket.emit("start-game", {
             code,
@@ -58,11 +46,9 @@ function Room() {
     };
 
     useEffect(() => {
-        socket.connect();
-
-        return () => {
-            socket.disconnect();
-        };
+        if (!socket.connected) {
+            socket.connect();
+        }
     }, []);
 
     useEffect(() => {
@@ -103,6 +89,22 @@ function Room() {
             socket.off("room-update", handleRoomUpdate);
         };
     }, []);
+
+    useEffect(() => {
+        const handleQuestionStart = (data) => {
+            navigate(`/game/${code}`, {
+                state: {
+                    question: data.question,
+                },
+            });
+        };
+
+        socket.on("question-start", handleQuestionStart);
+
+        return () => {
+            socket.off("question-start", handleQuestionStart);
+        };
+    }, [code, navigate]);
 
     useEffect(() => {
         loadRoom();
@@ -168,23 +170,6 @@ function Room() {
                 <div className="host-controls">
                     <button onClick={handleStartGame}>
                         Начать игру
-                    </button>
-                </div>
-            )}
-
-            {!isOwner && (
-                <div className="join-room">
-                    <h2>Войти в комнату</h2>
-
-                    <input
-                        type="text"
-                        value={nickname}
-                        onChange={(e) => setNickname(e.target.value)}
-                        placeholder="Введите ваш ник"
-                    />
-
-                    <button onClick={handleJoinRoom}>
-                        Войти
                     </button>
                 </div>
             )}

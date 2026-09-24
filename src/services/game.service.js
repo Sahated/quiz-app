@@ -53,13 +53,12 @@ class GameService {
         });
 
         await prisma.room.update({
-            where: {
-                id: room.id
-            },
+            where: { id: room.id },
             data: {
                 isStarted: true,
                 currentQuestion: 0,
-                finished: false
+                finished: false,
+                questionStartedAt: new Date()
             }
         });
         
@@ -134,25 +133,21 @@ class GameService {
         const nextIndex = room.currentQuestion + 1;
 
         if (nextIndex >= room.quiz.questions.length) {
-
             await prisma.room.update({
-                where: {
-                    id: room.id
-                },
+                where: { id: room.id },
                 data: {
-                    finished: true
+                    finished: true,
+                    questionStartedAt: null
                 }
             });
-
             return null;
         }
 
         await prisma.room.update({
-            where: {
-                id: room.id
-            },
+            where: { id: room.id },
             data: {
-                currentQuestion: nextIndex
+                currentQuestion: nextIndex,
+                questionStartedAt: new Date()
             }
         });
 
@@ -160,17 +155,103 @@ class GameService {
     }
 
     async finishGame(code) {
-
         const room = await prisma.room.update({
-            where: {
-                code
-            },
+            where: { code },
             data: {
-                finished: true
+                finished: true,
+                questionStartedAt: null
             }
         });
 
         return room;
+    }
+
+    async getGameState(code, playerId) {
+
+        const room = await prisma.room.findUnique({
+            where: {
+                code
+            },
+            include: {
+                quiz: {
+                    include: {
+                        questions: {
+                            orderBy: {
+                                order: "asc"
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!room) {
+            throw {
+                status: 404,
+                message: "Комната не найдена."
+            };
+        }
+
+        const question =
+            room.quiz.questions[room.currentQuestion];
+
+        if (!question) {
+            return {
+                finished: room.finished,
+                isStarted: room.isStarted,
+                timeLeft: 0,
+                answered: false,
+                question: null
+            };
+        }
+
+        let timeLeft = 0;
+
+        if (
+            room.isStarted &&
+            !room.finished &&
+            room.questionStartedAt
+        ) {
+            const elapsedSeconds = Math.floor(
+                (Date.now() - room.questionStartedAt.getTime()) / 1000
+            );
+
+            timeLeft = Math.max(
+                0,
+                question.timeLimit - elapsedSeconds
+            );
+        }
+
+        let answered = false;
+
+        if (playerId) {
+
+            const answer = await prisma.answer.findFirst({
+                where: {
+                    playerId: Number(playerId),
+                    questionId: question.id
+                }
+            });
+
+            answered = !!answer;
+        }
+
+        return {
+            finished: room.finished,
+            isStarted: room.isStarted,
+            timeLeft,
+            answered,
+            question: {
+                id: question.id,
+                text: question.text,
+                optionA: question.optionA,
+                optionB: question.optionB,
+                optionC: question.optionC,
+                optionD: question.optionD,
+                timeLimit: question.timeLimit,
+                order: question.order
+            }
+        };
     }
 
     async getLeaderboard(code) {
@@ -248,6 +329,19 @@ class GameService {
                 status: 400,
                 message: "Нет активного вопроса."
             };
+        }
+
+        if (room.questionStartedAt) {
+            const elapsedSeconds = Math.floor(
+                (Date.now() - room.questionStartedAt.getTime()) / 1000
+            );
+
+            if (elapsedSeconds >= question.timeLimit) {
+                throw {
+                    status: 400,
+                    message: "Время на ответ истекло."
+                };
+            }
         }
 
         const player = await prisma.player.findFirst({

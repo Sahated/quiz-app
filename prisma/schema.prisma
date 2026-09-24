@@ -45,31 +45,32 @@ model Question {
 }
 
 model Room {
-  id           Int      @id @default(autoincrement())
-  code         String   @unique
-  quizId        Int
-  isStarted     Boolean @default(false)
-  finished Boolean @default(false)
-  currentQuestion Int @default(0)
-  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  players       Player[]
-  createdAt    DateTime @default(now())
-}
+  id                Int      @id @default(autoincrement())
+  code              String   @unique
+  quizId            Int
+  isStarted         Boolean  @default(false)
+  finished          Boolean  @default(false)
+  currentQuestion   Int      @default(0)
+  questionStartedAt DateTime?
 
+  quiz              Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  players           Player[]
+  createdAt         DateTime @default(now())
+}
 model Player {
-  id         Int      @id @default(autoincrement())
-  nickname   String
-  score      Int @default(0)
-  roomId      Int
+  id           Int      @id @default(autoincrement())
+  nickname     String
+  score        Int @default(0)
+  roomId       Int
   room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
   answers     Answer[]
-  socketId String?
+  socketId    String?
   createdAt DateTime @default(now())
   @@unique([roomId, nickname])
 }
 
 model Answer {
-  id           Int      @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
   playerId      Int
   questionId    Int
   answer        String

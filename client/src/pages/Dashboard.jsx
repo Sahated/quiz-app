@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import Button from "../components/Button";
 import QuizCard from "../components/QuizCard";
@@ -8,6 +9,7 @@ import quizService from "../services/quiz.service";
 import "./Dashboard.css";
 
 function Dashboard() {
+    const navigate = useNavigate();
 
     const [quizzes, setQuizzes] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -93,6 +95,13 @@ function Dashboard() {
                     Создать
                 </Button>
             </div>
+
+            <div className="join-game">
+                <Button onClick={() => navigate("/join")}>
+                    🎮 Присоединиться к игре
+                </Button>
+            </div>
+
             {
                 error && (
                     <p className="error">
