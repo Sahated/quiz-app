@@ -32,11 +32,16 @@ function Dashboard() {
     }, []);
 
     const createQuiz = async () => {
-        if (!title.trim()) return;
+        if (!title.trim()) {
+            setError("Введите название викторины.");
+            return;
+        }
+
+        setError("");
 
         try {
             await quizService.create({
-                title
+                title: title.trim()
             });
 
             setTitle("");
@@ -44,7 +49,10 @@ function Dashboard() {
         }
 
         catch (err) {
-            setError(err.response?.data?.message || "Произошла ошибка");
+            setError(
+                err.response?.data?.message ||
+                "Не удалось создать викторину"
+            );
         }
     };
 
