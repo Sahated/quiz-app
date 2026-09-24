@@ -1,0 +1,39 @@
+.register-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f4f6f9;
+}
+
+.register-page .card {
+    width: 100%;
+    max-width: 400px;
+}
+
+.register-page h1 {
+    margin-bottom: 5px;
+}
+
+.register-page form {
+    margin-top: 25px;
+}
+
+.register-page .error {
+    color: #e52b2b;
+    margin: 10px 0;
+}
+
+.register-page .success {
+    color: #198754;
+    margin: 10px 0;
+}
+
+.register-footer {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.register-footer a {
+    margin-left: 5px;
+}

@@ -81,3 +81,26 @@
 .join-room button:hover {
     background: #1e50c4;
 }
+
+.host-controls {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 500px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.host-controls button {
+    border: none;
+    border-radius: 6px;
+    padding: 10px 18px;
+    background: #2864e8;
+    color: white;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.host-controls button:hover {
+    background: #1e50c4;
+}

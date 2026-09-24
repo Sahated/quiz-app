@@ -6,6 +6,7 @@ import Input from "../components/Input";
 import Button from "../components/Button";
 
 import authService from "../services/auth.service";
+import { useAuth } from "../context/AuthContext";
 
 import "./Login.css";
 
@@ -13,6 +14,8 @@ import "./Login.css";
 function Login() {
 
     const navigate = useNavigate();
+    const { login } = useAuth();
+
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -36,6 +39,9 @@ function Login() {
                 "token",
                 response.data.token
             );
+            
+            login(response.data.user);
+
             navigate("/dashboard");
         }
 

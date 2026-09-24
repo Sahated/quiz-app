@@ -8,9 +8,7 @@ const {
 
 function registerGameSocket(io) {
 
-    /**
-     * Автоматический запуск вопросов
-     */
+    // Автоматический запуск вопросов
     const startQuestion = async (code) => {
 
         try {
@@ -89,10 +87,36 @@ function registerGameSocket(io) {
     io.on("connection", (socket) => {
 
         console.log(`🟢 Подключился ${socket.id}`);
+        
+        // Подключение организатора
+        socket.on("join-host", ({ code }) => {
+            try {
+                if (!code) {
+                    throw {
+                        message: "Не указан код комнаты."
+                    };
+                }
 
-        /**
-         * Подключение игрока
-         */
+                socket.join(code);
+
+                socket.emit("joined-host", {
+                    success: true
+                });
+
+                console.log(
+                    `👑 Организатор подключился к комнате ${code}`
+                );
+            }
+
+            catch (err) {
+                socket.emit("error-message", {
+                    success: false,
+                    message: err.message
+                });
+            }
+        });
+
+        // Подключение игрока
         socket.on("join-room", async (data) => {
 
             try {
@@ -135,9 +159,7 @@ function registerGameSocket(io) {
             }
         });
 
-        /**
-         * Запуск игры
-         */
+        // Запуск игры
         socket.on("start-game", async ({ code }) => {
 
             try {
@@ -154,9 +176,8 @@ function registerGameSocket(io) {
                 });
             }
         });
-        /**
-         * Ответ игрока
-         */
+
+        // Ответ игрока
         socket.on("submit-answer", async (data) => {
 
             try {
@@ -192,9 +213,7 @@ function registerGameSocket(io) {
             }
         });
 
-        /**
-         * Принудительное завершение игры
-         */
+        // Принудительное завершение игры
         socket.on("finish-game", async ({ code }) => {
 
             try {
@@ -218,9 +237,7 @@ function registerGameSocket(io) {
             }
         });
 
-        /**
-         * Отключение игрока
-         */
+        // Отключение игрока
         socket.on("disconnect", async () => {
 
             try {
