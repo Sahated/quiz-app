@@ -1,0 +1,140 @@
+.quiz-editor {
+    padding: 24px;
+}
+
+.quiz-editor h1 {
+    margin-bottom: 5px;
+}
+
+.quiz-editor h2 {
+    margin-top: 0;
+    margin-bottom: 25px;
+}
+
+.question-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    max-width: 750px;
+}
+
+.question-card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.question-text {
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.options p {
+    margin: 8px 0;
+}
+
+.question-info {
+    margin-top: 15px;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+}
+
+.question-info p {
+    margin: 6px 0;
+}
+
+.question-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.question-actions button {
+    border: none;
+    border-radius: 6px;
+    padding: 9px 15px;
+    cursor: pointer;
+}
+
+.question-actions button:first-child {
+    background: #2864e8;
+    color: white;
+}
+
+.question-actions button:last-child {
+    background: #e52b2b;
+    color: white;
+}
+
+.question-form {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+    max-width: 750px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.question-form h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.question-form button {
+    border: none;
+    border-radius: 6px;
+    padding: 10px 18px;
+    background: #2864e8;
+    color: white;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.question-form button:hover {
+    background: #1e50c4;
+}
+
+.question-form button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.question-form-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.question-form .cancel-btn {
+    background: #777;
+}
+
+.question-form .cancel-btn:hover {
+    background: #666;
+}

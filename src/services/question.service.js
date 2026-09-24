@@ -49,15 +49,6 @@ class QuestionService {
             };
         }
 
-        const questionOrder = Number(order) || 1;
-
-        if (isNaN(questionOrder) || questionOrder < 1) {
-            throw {
-                status: 400,
-                message: "Порядковый номер должен быть больше 0."
-            };
-        }
-
         const quiz = await prisma.quiz.findFirst({
             where: {
                 id: Number(quizId),
@@ -71,7 +62,18 @@ class QuestionService {
                 message: "Викторина не найдена."
             };
         }
+        
+    const lastQuestion = await prisma.question.findFirst({
+        where: {
+            quizId: Number(quizId)
+        },
+        orderBy: {
+            order: "desc"
+        }
+    });
 
+    const questionOrder = lastQuestion ? lastQuestion.order + 1 : 1;
+    
         const question = await prisma.question.create({
             data: {
                 quizId: Number(quizId),
@@ -249,6 +251,26 @@ class QuestionService {
                 id: Number(id)
             }
         });
+
+        const remainingQuestions = await prisma.question.findMany({
+            where: {
+                quizId: question.quizId
+            },
+            orderBy: {
+                order: "asc"
+            }
+        });
+
+        for (let i = 0; i < remainingQuestions.length; i++) {
+            await prisma.question.update({
+                where: {
+                    id: remainingQuestions[i].id
+                },
+                data: {
+                    order: i + 1
+                }
+            });
+        }
 
         return {
             message: "Вопрос успешно удалён."

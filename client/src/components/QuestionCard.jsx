@@ -11,12 +11,10 @@ function QuestionCard({ question, onEdit, onDelete }) {
             </p>
 
             <div className="options">
-
                 <p>A. {question.optionA}</p>
                 <p>B. {question.optionB}</p>
                 <p>C. {question.optionC}</p>
                 <p>D. {question.optionD}</p>
-
             </div>
 
             <p>
@@ -28,7 +26,6 @@ function QuestionCard({ question, onEdit, onDelete }) {
             </p>
 
             <div className="question-actions">
-
                 <button onClick={() => onEdit(question)}>
                     Редактировать
                 </button>
@@ -36,7 +33,6 @@ function QuestionCard({ question, onEdit, onDelete }) {
                 <button onClick={() => onDelete(question.id)}>
                     Удалить
                 </button>
-
             </div>
 
         </div>

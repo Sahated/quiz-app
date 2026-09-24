@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
+
+import "./QuizEditor.css";
 import questionService from "../services/question.service";
 import quizService from "../services/quiz.service";
 import QuestionCard from "../components/QuestionCard";
+import QuestionForm from "../components/QuestionForm";
 
 function QuizEditor() {
 
@@ -13,7 +16,8 @@ function QuizEditor() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [quiz, setQuiz] = useState(null);
-
+    const [editingQuestion, setEditingQuestion] = useState(null);
+    
     const loadQuestions = async () => {
         setError("");
 
@@ -31,6 +35,53 @@ function QuizEditor() {
         }
     };
 
+    const handleEdit = (question) => {
+        setEditingQuestion(question);
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            await questionService.delete(id);
+
+            setQuestions((prev) => {
+                const remainingQuestions = prev
+                    .filter((question) => question.id !== id)
+                    .map((question, index) => ({
+                        ...question,
+                        order: index + 1,
+                    }));
+
+                return remainingQuestions;
+            });
+
+        } catch (err) {
+            setError(
+                err.response?.data?.message ||
+                "Не удалось удалить вопрос"
+            );
+        }
+    };
+
+    const handleQuestionCreated = (question) => {
+        setQuestions((prev) => [...prev, question]);
+    };
+
+    const handleQuestionUpdated = (updatedQuestion) => {
+        setQuestions((prev) =>
+            prev.map((question) =>
+                question.id === updatedQuestion.id
+                    ? updatedQuestion
+                    : question
+            )
+        );
+
+        setEditingQuestion(null);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingQuestion(null);
+    };
+    
     const loadQuiz = async () => {
 
     try {
@@ -42,14 +93,6 @@ function QuizEditor() {
     }
     };
 
-    const handleEdit = (question) => {
-        console.log(question);
-    };
-
-    const handleDelete = (id) => {
-        console.log(id);
-    };
-    
     useEffect(() => {
         loadQuiz();
         loadQuestions();
@@ -65,10 +108,18 @@ function QuizEditor() {
             <p>ID викторины: {id}</p>
 
             {error && <p className="error">{error}</p>}
+            
+            <QuestionForm
+                quizId={id}
+                question={editingQuestion}
+                onCreated={handleQuestionCreated}
+                onUpdated={handleQuestionUpdated}
+                onCancel={handleCancelEdit}
+            />
 
             {loading ? (
                 <p>Загрузка...</p>
-
+                
             ) : questions.length === 0 ? (
                 <p>В этой викторине пока нет вопросов.</p>
             ) : (
