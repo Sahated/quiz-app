@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-
+import { useNavigate, useParams } from "react-router-dom";
 
 import "./QuizEditor.css";
+
 import questionService from "../services/question.service";
 import quizService from "../services/quiz.service";
+import roomService from "../services/room.service";
 import QuestionCard from "../components/QuestionCard";
 import QuestionForm from "../components/QuestionForm";
+
 
 function QuizEditor() {
 
     const { id } = useParams();
+    const navigate = useNavigate();
 
     const [questions, setQuestions] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -62,6 +65,23 @@ function QuizEditor() {
         }
     };
 
+    const handleCreateRoom = async () => {
+        try {
+            setError("");
+
+            const response = await roomService.create(id);
+
+            const room = response.data.data;
+
+            navigate(`/room/${room.code}`);
+        } catch (err) {
+            setError(
+                err.response?.data?.message ||
+                "Не удалось создать комнату"
+            );
+        }
+    };
+    
     const handleQuestionCreated = (question) => {
         setQuestions((prev) => [...prev, question]);
     };
@@ -102,9 +122,15 @@ function QuizEditor() {
 
         <div className="quiz-editor">
             <h1>Редактор викторин</h1>
+
             <h2>
                 {quiz ? quiz.title : "Загрузка..."}
             </h2>
+
+            <button onClick={handleCreateRoom}>
+                Создать комнату
+            </button>
+            
             <p>ID викторины: {id}</p>
 
             {error && <p className="error">{error}</p>}

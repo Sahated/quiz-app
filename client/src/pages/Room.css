@@ -1,0 +1,83 @@
+.room-page {
+    padding: 24px;
+}
+
+.room-page h1 {
+    margin-bottom: 25px;
+}
+
+.room-code {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    max-width: 500px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    text-align: center;
+}
+
+.room-code p {
+    margin: 0 0 10px;
+}
+
+.room-code strong {
+    font-size: 36px;
+    letter-spacing: 5px;
+}
+
+.room-info,
+.players-list {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 500px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.players-list ul {
+    list-style: none;
+    padding: 0;
+}
+
+.players-list li {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.join-room {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 500px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.join-room h2 {
+    margin-top: 0;
+}
+
+.join-room input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.join-room button {
+    border: none;
+    border-radius: 6px;
+    padding: 10px 18px;
+    background: #2864e8;
+    color: white;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.join-room button:hover {
+    background: #1e50c4;
+}
