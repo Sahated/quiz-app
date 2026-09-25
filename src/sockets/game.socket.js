@@ -89,11 +89,31 @@ function registerGameSocket(io) {
         console.log(`🟢 Подключился ${socket.id}`);
         
         // Подключение организатора
-        socket.on("join-host", ({ code }) => {
+        socket.on("join-host", async ({ code }) => {
             try {
                 if (!code) {
                     throw {
+                        status: 400,
                         message: "Не указан код комнаты."
+                    };
+                }
+
+                if (!socket.user) {
+                    throw {
+                        status: 401,
+                        message: "Не авторизован."
+                    };
+                }
+
+                const isOwner = await roomService.isOwner(
+                    code,
+                    socket.user.id
+                );
+
+                if (!isOwner) {
+                    throw {
+                        status: 403,
+                        message: "Только организатор может войти как ведущий."
                     };
                 }
 
@@ -104,11 +124,10 @@ function registerGameSocket(io) {
                 });
 
                 console.log(
-                    `👑 Организатор подключился к комнате ${code}`
+                    `👑 Организатор ${socket.user.id} подключился к комнате ${code}`
                 );
-            }
 
-            catch (err) {
+            } catch (err) {
                 socket.emit("error-message", {
                     success: false,
                     message: err.message
@@ -161,17 +180,37 @@ function registerGameSocket(io) {
 
         // Запуск игры
         socket.on("start-game", async ({ code }) => {
-
             try {
-                await gameService.startGame(code);
-                console.log(
-                    `🚀 Игра началась: ${code}`
-                );
-                startQuestion(code);
-            }
+                if (!socket.user) {
+                    throw {
+                        status: 401,
+                        message: "Не авторизован."
+                    };
+                }
 
-            catch (err) {
+                const isOwner = await roomService.isOwner(
+                    code,
+                    socket.user.id
+                );
+
+                if (!isOwner) {
+                    throw {
+                        status: 403,
+                        message: "Только организатор может запустить игру."
+                    };
+                }
+
+                await gameService.startGame(code);
+
+                console.log(
+                    `🚀 Игра началась: ${code}, организатор: ${socket.user.id}`
+                );
+
+                startQuestion(code);
+
+            } catch (err) {
                 socket.emit("error-message", {
+                    success: false,
                     message: err.message
                 });
             }
@@ -215,28 +254,47 @@ function registerGameSocket(io) {
 
         // Принудительное завершение игры
         socket.on("finish-game", async ({ code }) => {
-
             try {
+                if (!socket.user) {
+                    throw {
+                        status: 401,
+                        message: "Не авторизован."
+                    };
+                }
+
+                const isOwner = await roomService.isOwner(
+                    code,
+                    socket.user.id
+                );
+
+                if (!isOwner) {
+                    throw {
+                        status: 403,
+                        message: "Только организатор может завершить игру."
+                    };
+                }
+
                 clearRoomTimer(code);
+
                 await gameService.finishGame(code);
-                const leaderboard =
-                    await gameService.getLeaderboard(code);
+
+                const leaderboard = await gameService.getLeaderboard(code);
+
                 io.to(code).emit("game-finished", {
                     leaderboard
                 });
-                console.log(
-                    `🏁 Игра принудительно завершена: ${code}`
-                );
-            }
 
-            catch (err) {
+                console.log(
+                    `🏁 Игра принудительно завершена: ${code}, организатор: ${socket.user.id}`
+                );
+
+            } catch (err) {
                 socket.emit("error-message", {
                     success: false,
                     message: err.message
                 });
             }
         });
-
         // Отключение игрока
         socket.on("disconnect", async () => {
 

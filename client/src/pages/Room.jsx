@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import roomService from "../services/room.service";
-import socket from "../socket/socket";
+import socket, { connectSocket } from "../socket/socket";
 import { useAuth } from "../context/AuthContext";
 
 import "./Room.css";
@@ -58,7 +58,7 @@ function Room() {
 
     useEffect(() => {
         if (!socket.connected) {
-            socket.connect();
+            connectSocket();
         }
     }, []);
 

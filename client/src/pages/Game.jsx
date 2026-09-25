@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-import socket from "../socket/socket";
+import socket, { connectSocket } from "../socket/socket";
 import roomService from "../services/room.service";
 
 import "./Game.css";
@@ -21,6 +21,8 @@ function Game() {
     const player = JSON.parse(
         sessionStorage.getItem("player") || "null"
     );
+
+    const isHost = !player && !!user;
 
     const handleAnswer = (answer) => {
         if (!player) {
@@ -51,9 +53,23 @@ function Game() {
         });
     };
 
+    const handleFinishGame = () => {
+        const confirmed = window.confirm(
+            "Вы уверены, что хотите завершить игру?"
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        socket.emit("finish-game", {
+            code
+        });
+    };
+
     useEffect(() => {
         if (!socket.connected) {
-            socket.connect();
+            connectSocket();
         }
 
         const joinGameRoom = () => {
@@ -166,6 +182,16 @@ function Game() {
                 <span>⏱ {timeLeft} сек.</span>
             </div>
 
+            {isHost && (
+                <button
+                    type="button"
+                    onClick={handleFinishGame}
+                    className="finish-game-button"
+                >
+                    Завершить игру
+                </button>
+            )}
+
             <div className="question-card">
                 <h1>{question.text}</h1>
 
@@ -200,7 +226,7 @@ function Game() {
                 </div>
             </div>
 
-            {!player && (
+            {isHost && (
                 <p className="host-info">
                     Вы вошли как организатор
                 </p>

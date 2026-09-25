@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import socket from "../socket/socket";
+import socket, { connectSocket } from "../socket/socket";
 
 import "./JoinGame.css";
 
@@ -31,9 +31,8 @@ function JoinGame() {
         setLoading(true);
 
         if (!socket.connected) {
-            socket.connect();
+            connectSocket();
         }
-
         socket.emit("join-room", {
             code: roomCode,
             nickname: playerNickname,

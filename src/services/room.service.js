@@ -200,80 +200,79 @@ class RoomService {
         };
     }
 
-async joinSocket(code, nickname, socketId) {
-
-    if (!code || !nickname) {
-        throw {
-            status: 400,
-            message: "Введите код комнаты и ник."
-        };
-    }
-
-    const room = await prisma.room.findUnique({
-        where: {
-            code
+    async joinSocket(code, nickname, socketId) {
+        if (!code || !nickname) {
+            throw {
+                status: 400,
+                message: "Введите код комнаты и ник."
+            };
         }
-    });
 
-    if (!room) {
-        throw {
-            status: 404,
-            message: "Комната не найдена."
-        };
-    }
-
-    if (room.finished) {
-        throw {
-            status: 400,
-            message: "Игра уже завершена."
-        };
-    }
-
-    let player = await prisma.player.findFirst({
-        where: {
-            roomId: room.id,
-            nickname
-        }
-    });
-
-    if (room.isStarted && !player) {
-        throw {
-            status: 400,
-            message: "Игра уже началась. Вход новых игроков закрыт."
-        };
-    }
-
-    // Если игрок уже существует — обновляем socketId
-    if (player) {
-
-        player = await prisma.player.update({
+        const room = await prisma.room.findUnique({
             where: {
-                id: player.id
-            },
-            data: {
-                socketId
+                code
             }
         });
 
-    } else {
+        if (!room) {
+            throw {
+                status: 404,
+                message: "Комната не найдена."
+            };
+        }
 
-        // Если игрока нет — создаем нового
-        player = await prisma.player.create({
-            data: {
-                nickname,
+        if (room.finished) {
+            throw {
+                status: 400,
+                message: "Игра уже завершена."
+            };
+        }
+
+        let player = await prisma.player.findFirst({
+            where: {
                 roomId: room.id,
-                socketId
+                nickname
             }
         });
 
+        if (room.isStarted && !player) {
+            throw {
+                status: 400,
+                message: "Игра уже началась. Вход новых игроков закрыт."
+            };
+        }
+
+        // Если игрок уже существует — обновляем socketId
+        if (player) {
+
+            player = await prisma.player.update({
+                where: {
+                    id: player.id
+                },
+                data: {
+                    socketId
+                }
+            });
+
+        } else {
+
+            // Если игрока нет — создаем нового
+            player = await prisma.player.create({
+                data: {
+                    nickname,
+                    roomId: room.id,
+                    socketId
+                }
+            });
+
+        }
+
+        return {
+            room,
+            player
+        };
     }
 
-    return {
-        room,
-        player
-    };
-
-    }
     async getPlayersByRoomId(roomId) {
 
         return prisma.player.findMany({
@@ -284,6 +283,24 @@ async joinSocket(code, nickname, socketId) {
                 score: "desc"
             }
         });
+    }
+
+    async isOwner(code, userId) {
+        const room = await prisma.room.findUnique({
+            where: { code },
+            include: {
+                quiz: true
+            }
+        });
+
+        if (!room) {
+            throw {
+                status: 404,
+                message: "Комната не найдена."
+            };
+        }
+
+        return room.quiz.ownerId === Number(userId);
     }
 }
 

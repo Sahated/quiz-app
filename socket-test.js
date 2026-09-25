@@ -1,95 +1,89 @@
 const { io } = require("socket.io-client");
 
-const socket = io("http://localhost:3000");
+const TOKEN = process.env.SOCKET_TOKEN;
+const ROOM_CODE = process.env.ROOM_CODE;
+const NICKNAME = process.env.NICKNAME || "TestPlayer";
+const ACTION = process.env.ACTION || "start";
 
-let playerId = null;
+if (!TOKEN) {
+    console.error("❌ Не указан SOCKET_TOKEN");
+    process.exit(1);
+}
+
+if (!ROOM_CODE) {
+    console.error("❌ Не указан ROOM_CODE");
+    process.exit(1);
+}
+
+const socket = io("http://localhost:3000", {
+    auth: {
+        token: TOKEN
+    }
+});
 
 socket.on("connect", () => {
-
     console.log("🟢 Подключено");
+    console.log(`🏠 Комната: ${ROOM_CODE}`);
+    console.log(`👤 Ник: ${NICKNAME}`);
 
     socket.emit("join-room", {
-        code: "MUHBCP",
-        nickname: "Shated"
+        code: ROOM_CODE,
+        nickname: NICKNAME
     });
-
 });
 
 socket.on("joined-room", (data) => {
-
     console.log("✅ Игрок вошёл");
-
     console.log(data);
 
-    playerId = data.player.id;
+    if (ACTION === "start") {
+        console.log("🧪 Проверяем попытку игрока запустить игру...");
 
-    socket.emit("start-game", {
-        code: "MUHBCP"
-    });
+        socket.emit("start-game", {
+            code: ROOM_CODE
+        });
+    }
 
+    if (ACTION === "finish") {
+        console.log("🧪 Проверяем попытку игрока завершить игру...");
+
+        socket.emit("finish-game", {
+            code: ROOM_CODE
+        });
+    }
 });
 
-socket.on("room-update", (players) => {
+socket.on("error-message", (data) => {
+    console.log("❌ Ошибка");
+    console.log(data);
 
-    console.log("\n📋 Игроки:");
-
-    console.table(players);
-
+    setTimeout(() => {
+        socket.disconnect();
+        process.exit(0);
+    }, 500);
 });
 
 socket.on("question-start", (data) => {
-
-    console.log("\n📢 Новый вопрос");
-
+    console.log("📢 Новый вопрос");
     console.log(data.question);
-
-    // Через 2 секунды автоматически отвечаем
-    setTimeout(() => {
-
-        socket.emit("submit-answer", {
-
-            code: "MUHBCP",
-
-            playerId,
-
-            answer: "C"
-
-        });
-
-    }, 2000);
-
-});
-
-socket.on("answer-result", (result) => {
-
-    console.log("\n🎯 Результат ответа");
-
-    console.log(result);
-
 });
 
 socket.on("leaderboard-update", (players) => {
-
-    console.log("\n🏆 Таблица лидеров");
-
+    console.log("🏆 Таблица лидеров");
     console.table(players);
-
 });
 
 socket.on("game-finished", (data) => {
-
-    console.log("\n🏁 Игра завершена");
-
+    console.log("🏁 Игра завершена");
     console.table(data.leaderboard);
 
+    socket.disconnect();
     process.exit(0);
-
 });
 
-socket.on("error-message", (err) => {
+socket.on("connect_error", (error) => {
+    console.log("❌ Ошибка подключения Socket.IO:");
+    console.log(error.message);
 
-    console.log("\n❌ Ошибка");
-
-    console.log(err);
-
+    process.exit(1);
 });
