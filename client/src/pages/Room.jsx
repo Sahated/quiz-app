@@ -25,9 +25,20 @@ function Room() {
             setError("");
 
             const response = await roomService.getRoom(code);
+            const roomData = response.data.data;
 
-            setRoom(response.data.data);
-            setPlayers(response.data.data.players || []);
+            if (roomData.finished) {
+                navigate(`/leaderboard/${code}`);
+                return;
+            }
+
+            if (roomData.isStarted) {
+                navigate(`/game/${code}`);
+                return;
+            }
+
+            setRoom(roomData);
+            setPlayers(roomData.players || []);
 
         } catch (err) {
             setError(
@@ -108,7 +119,7 @@ function Room() {
 
     useEffect(() => {
         loadRoom();
-    }, [code]);
+    }, [code, navigate]);
 
     useEffect(() => {
         if (!room || !isOwner) {

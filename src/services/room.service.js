@@ -62,6 +62,7 @@ class RoomService {
     }
 
     async join(code, nickname) {
+
         if (!code || !nickname) {
             throw {
                 status: 400,
@@ -89,6 +90,13 @@ class RoomService {
             };
         }
 
+        if (room.isStarted) {
+            throw {
+                status: 400,
+                message: "Игра уже началась. Вход новых игроков закрыт."
+            };
+        }
+
         const exists = await prisma.player.findFirst({
             where: {
                 roomId: room.id,
@@ -109,6 +117,7 @@ class RoomService {
                 roomId: room.id
             }
         });
+
         return player;
     }
 
@@ -226,6 +235,24 @@ async joinSocket(code, nickname, socketId) {
             nickname
         }
     });
+
+    if (room.isStarted && !player) {
+        throw {
+            status: 400,
+            message: "Игра уже началась. Вход новых игроков закрыт."
+        };
+    }
+
+    console.log(
+    "🔄 Подключение игрока:",
+        player
+            ? {
+                id: player.id,
+                nickname: player.nickname,
+                score: player.score
+            }
+            : "НОВЫЙ ИГРОК"
+    );
 
     // Если игрок уже существует — обновляем socketId
     if (player) {
