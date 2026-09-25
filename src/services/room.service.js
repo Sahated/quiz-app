@@ -243,17 +243,6 @@ async joinSocket(code, nickname, socketId) {
         };
     }
 
-    console.log(
-    "🔄 Подключение игрока:",
-        player
-            ? {
-                id: player.id,
-                nickname: player.nickname,
-                score: player.score
-            }
-            : "НОВЫЙ ИГРОК"
-    );
-
     // Если игрок уже существует — обновляем socketId
     if (player) {
 
