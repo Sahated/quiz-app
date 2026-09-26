@@ -22,8 +22,10 @@ io.use((socket, next) => {
     try {
         const token = socket.handshake.auth?.token;
 
+        // Игрок может подключиться без авторизации
         if (!token) {
-            return next(new Error("Токен не предоставлен."));
+            socket.user = null;
+            return next();
         }
 
         const decoded = jwt.verify(

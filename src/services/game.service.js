@@ -28,6 +28,13 @@ class GameService {
             };
         }
 
+        if (room.isStarted && !room.finished) {
+            throw {
+                status: 400,
+                message: "Игра уже запущена."
+            };
+        }
+        
         if (room.quiz.questions.length === 0) {
             throw {
                 status: 400,

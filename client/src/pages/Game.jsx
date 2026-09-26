@@ -40,12 +40,6 @@ function Game() {
         setSelectedAnswer(answer);
         setAnswerSubmitted(true);
 
-        console.log("📤 Отправляем ответ:", {
-            code,
-            playerId: player.id,
-            answer,
-        });
-
         socket.emit("submit-answer", {
             code,
             playerId: player.id,
@@ -99,22 +93,15 @@ function Game() {
         };
 
         const handleGameFinished = () => {
-            console.log("🏁 Игра завершена");
             navigate(`/leaderboard/${code}`);
-        };
-
-        const handleAnswerResult = (data) => {
-            console.log("📥 Ответ сервера:", data);
         };
 
         socket.on("question-start", handleQuestionStart);
         socket.on("game-finished", handleGameFinished);
-        socket.on("answer-result", handleAnswerResult);
 
         return () => {
             socket.off("question-start", handleQuestionStart);
             socket.off("game-finished", handleGameFinished);
-            socket.off("answer-result", handleAnswerResult);
             socket.off("connect", joinGameRoom);
         };
     }, [code, navigate, player, user]);

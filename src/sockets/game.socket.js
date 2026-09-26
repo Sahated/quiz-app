@@ -38,8 +38,19 @@ function registerGameSocket(io) {
                 `📢 Новый вопрос (${question.order}) для комнаты ${code}`
             );
 
+            const publicQuestion = {
+                id: question.id,
+                text: question.text,
+                optionA: question.optionA,
+                optionB: question.optionB,
+                optionC: question.optionC,
+                optionD: question.optionD,
+                timeLimit: question.timeLimit,
+                order: question.order
+            };
+
             io.to(code).emit("question-start", {
-                question
+                question: publicQuestion
             });
 
             clearRoomTimer(code);
@@ -117,6 +128,9 @@ function registerGameSocket(io) {
                     };
                 }
 
+                socket.playerId = null;
+                socket.roomCode = code;
+                
                 socket.join(code);
 
                 socket.emit("joined-host", {
@@ -147,6 +161,10 @@ function registerGameSocket(io) {
                         nickname,
                         socket.id
                     );
+                    
+                // Привязываем Socket.IO-соединение к игроку
+                socket.playerId = result.player.id;
+                socket.roomCode = data.code;
 
                 socket.join(code);
 
@@ -218,36 +236,28 @@ function registerGameSocket(io) {
 
         // Ответ игрока
         socket.on("submit-answer", async (data) => {
-
             try {
+                if (!socket.playerId) {
+                    throw new Error("Вы не подключены как игрок.");
+                }
 
-                const result =
-                    await gameService.submitAnswer(
-                        data.code,
-                        data.playerId,
-                        data.answer
-                    );
+                const result = await gameService.submitAnswer(
+                    data.code,
+                    socket.playerId,
+                    data.answer
+                );
 
                 socket.emit("answer-result", result);
 
-                const leaderboard =
-                    await gameService.getLeaderboard(
-                        data.code
-                    );
+                const leaderboard = await gameService.getLeaderboard(data.code);
 
                 io.to(data.code).emit(
                     "leaderboard-update",
                     leaderboard
                 );
-                console.log(
-                    `✅ Игрок ${data.playerId} ответил`
-                );
-            }
-
-            catch (err) {
+            } catch (error) {
                 socket.emit("error-message", {
-                    success: false,
-                    message: err.message
+                    message: error.message
                 });
             }
         });
@@ -297,31 +307,32 @@ function registerGameSocket(io) {
         });
         // Отключение игрока
         socket.on("disconnect", async () => {
-
             try {
-                console.log(`🔴 Отключился ${socket.id}`);
-                const prisma = require("../prisma");
-                const player =
-                    await prisma.player.findFirst({
-                        where: {
-                            socketId: socket.id
-                        }
-                    });
+                const player = await prisma.player.findFirst({
+                    where: {
+                        socketId: socket.id
+                    }
+                });
 
-                if (player) {
-                    await prisma.player.update({
-                        where: {
-                            id: player.id
-                        },
-                        data: {
-                            socketId: null
-                        }
-                    });
+                if (!player) {
+                    return;
                 }
-            }
 
-            catch (err) {
-                console.log(err);
+                await prisma.player.updateMany({
+                    where: {
+                        id: player.id,
+                        socketId: socket.id
+                    },
+                    data: {
+                        socketId: null
+                    }
+                });
+
+                console.log(
+                    `🔌 Игрок отключился: ${player.nickname}`
+                );
+            } catch (error) {
+                console.log("❌ Ошибка при отключении игрока:", error);
             }
         });
     });
