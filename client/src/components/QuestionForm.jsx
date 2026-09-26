@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
 import questionService from "../services/question.service";
 
-function QuestionForm({ quizId, question, onCreated, onUpdated, onCancel }) {
-
+function QuestionForm({
+    quizId,
+    question,
+    onCreated,
+    onUpdated,
+    onCancel
+}) {
     const isEditMode = Boolean(question);
 
     const [form, setForm] = useState({
@@ -12,7 +17,7 @@ function QuestionForm({ quizId, question, onCreated, onUpdated, onCancel }) {
         optionC: "",
         optionD: "",
         correctAnswer: "A",
-        timeLimit: 20,
+        timeLimit: 20
     });
 
     const [loading, setLoading] = useState(false);
@@ -27,7 +32,7 @@ function QuestionForm({ quizId, question, onCreated, onUpdated, onCancel }) {
                 optionC: question.optionC,
                 optionD: question.optionD,
                 correctAnswer: question.correctAnswer,
-                timeLimit: question.timeLimit,
+                timeLimit: question.timeLimit
             });
         } else {
             setForm({
@@ -37,7 +42,7 @@ function QuestionForm({ quizId, question, onCreated, onUpdated, onCancel }) {
                 optionC: "",
                 optionD: "",
                 correctAnswer: "A",
-                timeLimit: 20,
+                timeLimit: 20
             });
         }
 
@@ -49,7 +54,7 @@ function QuestionForm({ quizId, question, onCreated, onUpdated, onCancel }) {
 
         setForm((prev) => ({
             ...prev,
-            [name]: value,
+            [name]: value
         }));
     };
 
@@ -67,7 +72,7 @@ function QuestionForm({ quizId, question, onCreated, onUpdated, onCancel }) {
                 optionC: form.optionC,
                 optionD: form.optionD,
                 correctAnswer: form.correctAnswer,
-                timeLimit: Number(form.timeLimit),
+                timeLimit: Number(form.timeLimit)
             };
 
             if (isEditMode) {
@@ -80,7 +85,7 @@ function QuestionForm({ quizId, question, onCreated, onUpdated, onCancel }) {
             } else {
                 const response = await questionService.create({
                     ...data,
-                    quizId: Number(quizId),
+                    quizId: Number(quizId)
                 });
 
                 onCreated(response.data.data);
@@ -92,10 +97,9 @@ function QuestionForm({ quizId, question, onCreated, onUpdated, onCancel }) {
                     optionC: "",
                     optionD: "",
                     correctAnswer: "A",
-                    timeLimit: 20,
+                    timeLimit: 20
                 });
             }
-
         } catch (err) {
             setError(
                 err.response?.data?.message ||
@@ -107,111 +111,152 @@ function QuestionForm({ quizId, question, onCreated, onUpdated, onCancel }) {
     };
 
     return (
-        <form className="question-form" onSubmit={handleSubmit}>
-
-            <h2>
-                {isEditMode
-                    ? "Редактировать вопрос"
-                    : "Добавить вопрос"}
-            </h2>
+        <form
+            className="question-form"
+            onSubmit={handleSubmit}
+        >
 
             {error && (
-                <p className="error">{error}</p>
+                <div className="question-form-error">
+                    {error}
+                </div>
             )}
 
             <div className="form-group">
-                <label>Текст вопроса</label>
+
+                <label htmlFor="question-text">
+                    Текст вопроса
+                </label>
 
                 <textarea
+                    id="question-text"
                     name="text"
                     value={form.text}
                     onChange={handleChange}
-                    placeholder="Введите текст вопроса"
+                    placeholder="Введите текст вопроса..."
                     required
                 />
+
             </div>
 
-            <div className="form-group">
-                <label>Вариант A</label>
+            <div className="answers-heading">
+                <h3>Варианты ответа</h3>
 
-                <input
-                    type="text"
-                    name="optionA"
-                    value={form.optionA}
-                    onChange={handleChange}
-                    required
-                />
+                <span>
+                    Выберите правильный ответ ниже
+                </span>
             </div>
 
-            <div className="form-group">
-                <label>Вариант B</label>
+            <div className="answers-grid">
 
-                <input
-                    type="text"
-                    name="optionB"
-                    value={form.optionB}
-                    onChange={handleChange}
-                    required
-                />
+                <div className="answer-field">
+                    <span className="answer-letter">A</span>
+
+                    <input
+                        type="text"
+                        name="optionA"
+                        value={form.optionA}
+                        onChange={handleChange}
+                        placeholder="Вариант A"
+                        required
+                    />
+                </div>
+
+                <div className="answer-field">
+                    <span className="answer-letter">B</span>
+
+                    <input
+                        type="text"
+                        name="optionB"
+                        value={form.optionB}
+                        onChange={handleChange}
+                        placeholder="Вариант B"
+                        required
+                    />
+                </div>
+
+                <div className="answer-field">
+                    <span className="answer-letter">C</span>
+
+                    <input
+                        type="text"
+                        name="optionC"
+                        value={form.optionC}
+                        onChange={handleChange}
+                        placeholder="Вариант C"
+                        required
+                    />
+                </div>
+
+                <div className="answer-field">
+                    <span className="answer-letter">D</span>
+
+                    <input
+                        type="text"
+                        name="optionD"
+                        value={form.optionD}
+                        onChange={handleChange}
+                        placeholder="Вариант D"
+                        required
+                    />
+                </div>
+
             </div>
 
-            <div className="form-group">
-                <label>Вариант C</label>
+            <div className="question-settings">
 
-                <input
-                    type="text"
-                    name="optionC"
-                    value={form.optionC}
-                    onChange={handleChange}
-                    required
-                />
-            </div>
+                <div className="form-group compact">
 
-            <div className="form-group">
-                <label>Вариант D</label>
+                    <label htmlFor="correct-answer">
+                        Правильный ответ
+                    </label>
 
-                <input
-                    type="text"
-                    name="optionD"
-                    value={form.optionD}
-                    onChange={handleChange}
-                    required
-                />
-            </div>
+                    <select
+                        id="correct-answer"
+                        name="correctAnswer"
+                        value={form.correctAnswer}
+                        onChange={handleChange}
+                    >
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                    </select>
 
-            <div className="form-group">
-                <label>Правильный ответ</label>
+                </div>
 
-                <select
-                    name="correctAnswer"
-                    value={form.correctAnswer}
-                    onChange={handleChange}
-                >
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                    <option value="C">C</option>
-                    <option value="D">D</option>
-                </select>
-            </div>
+                <div className="form-group compact">
 
-            <div className="form-group">
-                <label>Время на ответ (секунды)</label>
+                    <label htmlFor="time-limit">
+                        Время на ответ
+                    </label>
 
-                <input
-                    type="number"
-                    name="timeLimit"
-                    value={form.timeLimit}
-                    onChange={handleChange}
-                    min="5"
-                    max="120"
-                    required
-                />
+                    <div className="time-input">
+
+                        <input
+                            id="time-limit"
+                            type="number"
+                            name="timeLimit"
+                            value={form.timeLimit}
+                            onChange={handleChange}
+                            min="5"
+                            max="120"
+                            required
+                        />
+
+                        <span>сек.</span>
+
+                    </div>
+
+                </div>
+
             </div>
 
             <div className="question-form-actions">
 
                 <button
                     type="submit"
+                    className="save-question-btn"
                     disabled={loading}
                 >
                     {loading

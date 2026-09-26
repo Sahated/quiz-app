@@ -33,6 +33,7 @@ function JoinGame() {
         if (!socket.connected) {
             connectSocket();
         }
+
         socket.emit("join-room", {
             code: roomCode,
             nickname: playerNickname,
@@ -56,7 +57,10 @@ function JoinGame() {
 
         const handleSocketError = (data) => {
             setLoading(false);
-            setError(data.message || "Не удалось войти в комнату.");
+            setError(
+                data.message ||
+                "Не удалось войти в комнату."
+            );
         };
 
         socket.on("joined-room", handleJoinedRoom);
@@ -68,33 +72,135 @@ function JoinGame() {
         };
     }, [navigate, code]);
 
+    const handleCodeChange = (event) => {
+        setCode(
+            event.target.value
+                .toUpperCase()
+                .replace(/[^A-Z0-9]/g, "")
+        );
+
+        if (error) {
+            setError("");
+        }
+    };
+
+    const handleNicknameChange = (event) => {
+        setNickname(event.target.value);
+
+        if (error) {
+            setError("");
+        }
+    };
+
+    const handleKeyDown = (event) => {
+        if (event.key === "Enter" && !loading) {
+            handleJoin();
+        }
+    };
+
     return (
         <div className="join-page">
-            <div className="join-card">
-                <h1>🎯 Quiz App</h1>
-                <h2>Вход в игру</h2>
+            <div className="join-container">
 
-                <input
-                    type="text"
-                    placeholder="Код комнаты"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value.toUpperCase())}
-                    maxLength={6}
-                />
+                <div className="join-brand">
+                    <div className="join-brand-icon">
+                        🎯
+                    </div>
 
-                <input
-                    type="text"
-                    placeholder="Ваш ник"
-                    value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
-                    maxLength={30}
-                />
+                    <span>Quiz App</span>
+                </div>
 
-                {error && <p className="error">{error}</p>}
+                <div className="join-card">
 
-                <button onClick={handleJoin} disabled={loading}>
-                    {loading ? "Подключение..." : "Войти в игру"}
-                </button>
+                    <div className="join-card-header">
+                        <div className="join-icon">
+                            🎮
+                        </div>
+
+                        <h1>Вход в игру</h1>
+
+                        <p>
+                            Введите код комнаты и ваше имя,
+                            чтобы присоединиться к викторине.
+                        </p>
+                    </div>
+
+                    <div className="join-form">
+
+                        <div className="join-field">
+                            <label htmlFor="room-code">
+                                Код комнаты
+                            </label>
+
+                            <input
+                                id="room-code"
+                                type="text"
+                                placeholder="Например, A7K3P"
+                                value={code}
+                                onChange={handleCodeChange}
+                                onKeyDown={handleKeyDown}
+                                maxLength={6}
+                                autoComplete="off"
+                                autoFocus
+                            />
+
+                            <span className="join-field-hint">
+                                Код должен содержать до 6 символов
+                            </span>
+                        </div>
+
+                        <div className="join-field">
+                            <label htmlFor="nickname">
+                                Ваш ник
+                            </label>
+
+                            <input
+                                id="nickname"
+                                type="text"
+                                placeholder="Как вас будут видеть игроки?"
+                                value={nickname}
+                                onChange={handleNicknameChange}
+                                onKeyDown={handleKeyDown}
+                                maxLength={30}
+                                autoComplete="off"
+                            />
+                        </div>
+
+                        {error && (
+                            <div className="join-error">
+                                <span>!</span>
+                                <p>{error}</p>
+                            </div>
+                        )}
+
+                        <button
+                            className="join-button"
+                            type="button"
+                            onClick={handleJoin}
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <>
+                                    <span className="join-spinner"></span>
+                                    Подключение...
+                                </>
+                            ) : (
+                                <>
+                                    Войти в игру
+                                    <span className="join-button-arrow">
+                                        →
+                                    </span>
+                                </>
+                            )}
+                        </button>
+
+                    </div>
+                </div>
+
+                <p className="join-footer">
+                    После входа вы попадёте в комнату ожидания
+                </p>
+
             </div>
         </div>
     );

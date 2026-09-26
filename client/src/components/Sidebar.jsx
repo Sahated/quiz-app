@@ -6,7 +6,8 @@ function Sidebar() {
     return (
         <aside className="sidebar">
             <NavLink to="/dashboard">
-                📝 Мои квизы
+                <span className="sidebar-icon">📝</span>
+                <span>Мои квизы</span>
             </NavLink>
         </aside>
     );

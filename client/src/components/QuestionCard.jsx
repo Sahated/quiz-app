@@ -1,41 +1,80 @@
 function QuestionCard({ question, onEdit, onDelete }) {
     return (
-        <div className="question-card">
+        <article className="question-card">
 
-            <h3>
-                Вопрос {question.order}
-            </h3>
+            <div className="question-card-header">
 
-            <p>
-                <strong>{question.text}</strong>
-            </p>
+                <div className="question-number">
+                    Вопрос {question.order}
+                </div>
 
-            <div className="options">
-                <p>A. {question.optionA}</p>
-                <p>B. {question.optionB}</p>
-                <p>C. {question.optionC}</p>
-                <p>D. {question.optionD}</p>
+                <div className="question-actions">
+
+                    <button
+                        className="question-edit-btn"
+                        type="button"
+                        onClick={() => onEdit(question)}
+                    >
+                        Редактировать
+                    </button>
+
+                    <button
+                        className="question-delete-btn"
+                        type="button"
+                        onClick={() => onDelete(question.id)}
+                    >
+                        Удалить
+                    </button>
+
+                </div>
+
             </div>
 
-            <p>
-                <strong>Правильный ответ:</strong> {question.correctAnswer}
-            </p>
+            <div className="question-card-content">
 
-            <p>
-                <strong>Время:</strong> {question.timeLimit} сек.
-            </p>
+                <h3>
+                    {question.text}
+                </h3>
 
-            <div className="question-actions">
-                <button onClick={() => onEdit(question)}>
-                    Редактировать
-                </button>
+                <div className="options">
 
-                <button onClick={() => onDelete(question.id)}>
-                    Удалить
-                </button>
+                    <div className="option">
+                        <span className="option-letter">A</span>
+                        <span>{question.optionA}</span>
+                    </div>
+
+                    <div className="option">
+                        <span className="option-letter">B</span>
+                        <span>{question.optionB}</span>
+                    </div>
+
+                    <div className="option">
+                        <span className="option-letter">C</span>
+                        <span>{question.optionC}</span>
+                    </div>
+
+                    <div className="option">
+                        <span className="option-letter">D</span>
+                        <span>{question.optionD}</span>
+                    </div>
+
+                </div>
+
             </div>
 
-        </div>
+            <div className="question-card-footer">
+
+                <span>
+                    ⏱ {question.timeLimit} сек.
+                </span>
+
+                <span>
+                    Правильный ответ: {question.correctAnswer}
+                </span>
+
+            </div>
+
+        </article>
     );
 }
 

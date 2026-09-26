@@ -8,7 +8,6 @@ import { useAuth } from "../context/AuthContext";
 import "./Room.css";
 
 function Room() {
-
     const { code } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -39,7 +38,6 @@ function Room() {
 
             setRoom(roomData);
             setPlayers(roomData.players || []);
-
         } catch (err) {
             setError(
                 err.response?.data?.message ||
@@ -78,7 +76,6 @@ function Room() {
         const handleJoinedRoom = (data) => {
             if (data.success) {
                 setError("");
-                console.log("Успешно вошли в комнату:", data.player);
             }
         };
 
@@ -134,7 +131,7 @@ function Room() {
     useEffect(() => {
         const handleJoinedHost = (data) => {
             if (data.success) {
-                console.log("👑 Организатор подключён к комнате:", code);
+                // Организатор подключён к комнате
             }
         };
 
@@ -146,65 +143,178 @@ function Room() {
     }, [code]);
 
     if (loading) {
-        return <p>Загрузка комнаты...</p>;
+        return (
+            <div className="room-page">
+                <div className="room-state">
+                    <div className="room-state-icon">⏳</div>
+                    <h2>Загрузка комнаты</h2>
+                    <p>Подождите немного...</p>
+                </div>
+            </div>
+        );
     }
 
     if (error) {
-        return <p className="error">{error}</p>;
+        return (
+            <div className="room-page">
+                <div className="room-state room-state-error">
+                    <div className="room-state-icon">!</div>
+                    <h2>Не удалось открыть комнату</h2>
+                    <p>{error}</p>
+                </div>
+            </div>
+        );
     }
 
     if (!room) {
-        return <p>Комната не найдена.</p>;
+        return (
+            <div className="room-page">
+                <div className="room-state">
+                    <div className="room-state-icon">?</div>
+                    <h2>Комната не найдена</h2>
+                    <p>Проверьте код комнаты и попробуйте снова.</p>
+                </div>
+            </div>
+        );
     }
 
     return (
         <div className="room-page">
+            <div className="room-container">
 
-            <h1>Игровая комната</h1>
+                <header className="room-header">
+                    <div>
+                        <div className="room-label">
+                            ИГРОВАЯ КОМНАТА
+                        </div>
 
-            <div className="room-code">
-                <p>Код комнаты:</p>
-                <strong>{room.code}</strong>
+                        <h1>
+                            {room.quiz?.title || "Викторина"}
+                        </h1>
+
+                        <p>
+                            {isOwner
+                                ? "Ожидание участников перед началом игры"
+                                : "Вы присоединились к игре"}
+                        </p>
+                    </div>
+
+                    <div className="room-status">
+                        <span className="status-dot"></span>
+                        Ожидание
+                    </div>
+                </header>
+
+                <section className="room-main">
+
+                    <div className="room-code-card">
+                        <div className="room-code-label">
+                            КОД ИГРЫ
+                        </div>
+
+                        <div className="room-code-value">
+                            {room.code}
+                        </div>
+
+                        <p>
+                            Поделитесь этим кодом с участниками
+                        </p>
+                    </div>
+
+                    <div className="players-card">
+
+                        <div className="players-card-header">
+                            <div>
+                                <h2>Участники</h2>
+                                <p>
+                                    Ожидаем игроков в комнате
+                                </p>
+                            </div>
+
+                            <div className="players-count">
+                                {players.length}
+                            </div>
+                        </div>
+
+                        {players.length === 0 ? (
+                            <div className="players-empty">
+                                <div className="players-empty-icon">
+                                    👥
+                                </div>
+
+                                <h3>
+                                    Пока никто не присоединился
+                                </h3>
+
+                                <p>
+                                    Отправьте участникам код игры,
+                                    чтобы они могли войти.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="players-list">
+                                {players.map((player) => (
+                                    <div
+                                        className="player-item"
+                                        key={player.id}
+                                    >
+                                        <div className="player-avatar">
+                                            {player.nickname
+                                                ?.charAt(0)
+                                                .toUpperCase()}
+                                        </div>
+
+                                        <span>
+                                            {player.nickname}
+                                        </span>
+
+                                        <span className="player-ready">
+                                            Готов
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {isOwner ? (
+                        <div className="host-panel">
+                            <div>
+                                <h2>Всё готово?</h2>
+
+                                <p>
+                                    Когда все участники присоединятся,
+                                    можно начинать игру.
+                                </p>
+                            </div>
+
+                            <button
+                                className="start-game-button"
+                                type="button"
+                                onClick={handleStartGame}
+                            >
+                                <span>🚀</span>
+                                Начать игру
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="waiting-panel">
+                            <div className="waiting-icon">
+                                ⏱
+                            </div>
+
+                            <div>
+                                <h2>Ожидаем начала игры</h2>
+                                <p>
+                                    Организатор скоро запустит
+                                    викторину. Не закрывайте страницу.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                </section>
             </div>
-
-            <div className="room-info">
-                <h2>
-                    {room.quiz?.title || "Викторина"}
-                </h2>
-
-                <p>
-                    Участников: {players.length}
-                </p>
-            </div>
-
-            {isOwner && (
-                <div className="host-controls">
-                    <button onClick={handleStartGame}>
-                        Начать игру
-                    </button>
-                </div>
-            )}
-
-            <div className="players-list">
-
-                <h2>Участники</h2>
-
-                {players.length === 0 ? (
-                    <p>
-                        Пока никто не присоединился.
-                    </p>
-                ) : (
-                    <ul>
-                        {players.map((player) => (
-                            <li key={player.id}>
-                                {player.nickname}
-                            </li>
-                        ))}
-                    </ul>
-                )}
-
-            </div>
-
         </div>
     );
 }

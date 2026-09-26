@@ -12,26 +12,31 @@ import NotFound from "./pages/NotFound";
 import JoinGame from "./pages/JoinGame";
 
 import MainLayout from "./layouts/MainLayout";
+import GameLayout from "./layouts/GameLayout";
 
 function App() {
     return (
         <Routes>
 
-            {/* Public Pages*/}
+            {/* Public pages */}
 
-            <Route path="/" element={<Login />} />
-            
+            <Route
+                path="/"
+                element={<Login />}
+            />
+
             <Route
                 path="/register"
                 element={<Register />}
             />
 
-            <Route 
-                path="/join" 
-                element={<JoinGame />} 
+            <Route
+                path="/join"
+                element={<JoinGame />}
             />
 
-            {/* Private part of the app */}
+
+            {/* Organizer pages */}
 
             <Route element={<MainLayout />}>
 
@@ -44,6 +49,13 @@ function App() {
                     path="/quiz/:id"
                     element={<QuizEditor />}
                 />
+
+            </Route>
+
+
+            {/* Game pages */}
+
+            <Route element={<GameLayout />}>
 
                 <Route
                     path="/room/:code"
@@ -61,6 +73,9 @@ function App() {
                 />
 
             </Route>
+
+
+            {/* 404 */}
 
             <Route
                 path="*"

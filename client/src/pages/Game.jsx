@@ -17,12 +17,12 @@ function Game() {
 
     const [selectedAnswer, setSelectedAnswer] = useState(null);
     const [answerSubmitted, setAnswerSubmitted] = useState(false);
-    
+
     const player = JSON.parse(
         sessionStorage.getItem("player") || "null"
     );
 
-    const isHost = !player && !!user;
+    const isHost = !!user && !player;
 
     const handleAnswer = (answer) => {
         if (!player) {
@@ -42,7 +42,6 @@ function Game() {
 
         socket.emit("submit-answer", {
             code,
-            playerId: player.id,
             answer,
         });
     };
@@ -57,7 +56,7 @@ function Game() {
         }
 
         socket.emit("finish-game", {
-            code
+            code,
         });
     };
 
@@ -137,7 +136,6 @@ function Game() {
         if (!question) {
             loadGameState();
         }
-
     }, [code, navigate, question]);
 
     useEffect(() => {
@@ -152,72 +150,266 @@ function Game() {
         return () => clearInterval(timer);
     }, [timeLeft]);
 
-    const answerDisabled = answerSubmitted || timeLeft <= 0;
-    
+    const answerDisabled =
+        answerSubmitted || timeLeft <= 0;
+
+    const getAnswerClass = (answer) => {
+        let className = "answer-button";
+
+        if (selectedAnswer === answer) {
+            className += " selected";
+        }
+
+        if (answerSubmitted) {
+            className += " submitted";
+        }
+
+        return className;
+    };
+
     if (!question) {
         return (
             <div className="game-page">
-                <h1>Ожидание вопроса...</h1>
+                <div className="game-state">
+                    <div className="game-state-icon">
+                        ⏳
+                    </div>
+
+                    <h1>Ожидание вопроса</h1>
+
+                    <p>
+                        Следующий вопрос появится автоматически.
+                    </p>
+                </div>
             </div>
         );
     }
 
     return (
         <div className="game-page">
-            <div className="game-header">
-                <span>Комната: {code}</span>
-                <span>⏱ {timeLeft} сек.</span>
+
+            <div className="game-container">
+
+                <header className="game-header">
+
+                    <div className="game-header-left">
+                        <div className="game-label">
+                            ВИКТОРИНА
+                        </div>
+
+                        <div className="game-room-code">
+                            Комната: <strong>{code}</strong>
+                        </div>
+                    </div>
+
+                    <div
+                        className={`game-timer ${
+                            timeLeft <= 5
+                                ? "game-timer-danger"
+                                : ""
+                        }`}
+                    >
+                        <span className="timer-icon">
+                            ⏱
+                        </span>
+
+                        <span>
+                            {timeLeft}
+                        </span>
+
+                        <small>сек.</small>
+                    </div>
+
+                </header>
+
+                {isHost && (
+                    <div className="host-toolbar">
+                        <div>
+                            <strong>Режим организатора</strong>
+                            <span>
+                                Вы наблюдаете за ходом игры
+                            </span>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={handleFinishGame}
+                            className="finish-game-button"
+                        >
+                            Завершить игру
+                        </button>
+                    </div>
+                )}
+
+                <main className="game-content">
+
+                    <div className="question-progress">
+                        <span>
+                            Вопрос {question.order}
+                        </span>
+
+                        {answerSubmitted && (
+                            <span className="answer-status">
+                                ✓ Ответ принят
+                            </span>
+                        )}
+
+                        {!answerSubmitted &&
+                            timeLeft <= 0 && (
+                                <span className="answer-status expired">
+                                    Время вышло
+                                </span>
+                            )}
+                    </div>
+
+                    <section className="question-card">
+
+                        <h1>
+                            {question.text}
+                        </h1>
+
+                        <div className="answers">
+
+                            <button
+                                type="button"
+                                className={getAnswerClass("A")}
+                                onClick={() =>
+                                    handleAnswer("A")
+                                }
+                                disabled={answerDisabled}
+                            >
+                                <span className="answer-letter">
+                                    A
+                                </span>
+
+                                <span className="answer-text">
+                                    {question.optionA}
+                                </span>
+
+                                {selectedAnswer === "A" && (
+                                    <span className="answer-check">
+                                        ✓
+                                    </span>
+                                )}
+                            </button>
+
+                            <button
+                                type="button"
+                                className={getAnswerClass("B")}
+                                onClick={() =>
+                                    handleAnswer("B")
+                                }
+                                disabled={answerDisabled}
+                            >
+                                <span className="answer-letter">
+                                    B
+                                </span>
+
+                                <span className="answer-text">
+                                    {question.optionB}
+                                </span>
+
+                                {selectedAnswer === "B" && (
+                                    <span className="answer-check">
+                                        ✓
+                                    </span>
+                                )}
+                            </button>
+
+                            <button
+                                type="button"
+                                className={getAnswerClass("C")}
+                                onClick={() =>
+                                    handleAnswer("C")
+                                }
+                                disabled={answerDisabled}
+                            >
+                                <span className="answer-letter">
+                                    C
+                                </span>
+
+                                <span className="answer-text">
+                                    {question.optionC}
+                                </span>
+
+                                {selectedAnswer === "C" && (
+                                    <span className="answer-check">
+                                        ✓
+                                    </span>
+                                )}
+                            </button>
+
+                            <button
+                                type="button"
+                                className={getAnswerClass("D")}
+                                onClick={() =>
+                                    handleAnswer("D")
+                                }
+                                disabled={answerDisabled}
+                            >
+                                <span className="answer-letter">
+                                    D
+                                </span>
+
+                                <span className="answer-text">
+                                    {question.optionD}
+                                </span>
+
+                                {selectedAnswer === "D" && (
+                                    <span className="answer-check">
+                                        ✓
+                                    </span>
+                                )}
+                            </button>
+
+                        </div>
+
+                        {!answerSubmitted &&
+                            timeLeft > 0 &&
+                            !isHost && (
+                                <p className="answer-hint">
+                                    Выберите один вариант ответа
+                                </p>
+                            )}
+
+                        {answerSubmitted && (
+                            <div className="submitted-message">
+                                <span>✓</span>
+
+                                <div>
+                                    <strong>
+                                        Ответ принят
+                                    </strong>
+
+                                    <p>
+                                        Ожидайте следующий вопрос.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {!answerSubmitted &&
+                            timeLeft <= 0 && (
+                                <div className="submitted-message expired-message">
+                                    <span>⌛</span>
+
+                                    <div>
+                                        <strong>
+                                            Время вышло
+                                        </strong>
+
+                                        <p>
+                                            Дождитесь следующего вопроса.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                    </section>
+
+                </main>
+
             </div>
-
-            {isHost && (
-                <button
-                    type="button"
-                    onClick={handleFinishGame}
-                    className="finish-game-button"
-                >
-                    Завершить игру
-                </button>
-            )}
-
-            <div className="question-card">
-                <h1>{question.text}</h1>
-
-                <div className="answers">
-                    <button
-                        onClick={() => handleAnswer("A")}
-                        disabled={answerDisabled}
-                    >
-                        <strong>A.</strong> {question.optionA}
-                    </button>
-
-                    <button
-                        onClick={() => handleAnswer("B")}
-                        disabled={answerDisabled}
-                    >
-                        <strong>B.</strong> {question.optionB}
-                    </button>
-
-                    <button
-                        onClick={() => handleAnswer("C")}
-                        disabled={answerDisabled}
-                    >
-                        <strong>C.</strong> {question.optionC}
-                    </button>
-
-                    <button
-                        onClick={() => handleAnswer("D")}
-                        disabled={answerDisabled}
-                    >
-                        <strong>D.</strong> {question.optionD}
-                    </button>
-                </div>
-            </div>
-
-            {isHost && (
-                <p className="host-info">
-                    Вы вошли как организатор
-                </p>
-            )}
         </div>
     );
 }

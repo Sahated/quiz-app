@@ -1,26 +1,86 @@
-.sidebar{
-    width:240px;
-    background:white;
-    min-height:calc(100vh - 70px);
-    display:flex;
-    flex-direction:column;
-    padding:20px;
-    gap:15px;
-    box-shadow:2px 0 10px rgba(0,0,0,.05);
+.sidebar {
+    width: 240px;
+
+    min-height: calc(100vh - 68px);
+
+    box-sizing: border-box;
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 14px 12px;
+
+    background: #ffffff;
+
+    border-right: 1px solid #e8e9ef;
 }
 
-.sidebar a{
-    padding:12px;
-    border-radius:8px;
-    color:var(--text);
-    transition:.2s;
+.sidebar a {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 11px 13px;
+
+    border-radius: 9px;
+
+    color: #656875;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    text-decoration: none;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
 }
 
-.sidebar a:hover{
-    background:#eef2ff;
+.sidebar-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 24px;
+    height: 24px;
+
+    font-size: 15px;
 }
 
-.sidebar .active{
-    background:var(--primary);
-    color:white;
+.sidebar a:hover {
+    background: #f5f5ff;
+
+    color: #6366f1;
+}
+
+.sidebar a.active {
+    background: #eef0ff;
+
+    color: #6366f1;
+
+    font-weight: 600;
+}
+
+/* Active icon */
+
+.sidebar a.active .sidebar-icon {
+    color: #6366f1;
+}
+
+@media (max-width: 700px) {
+    .sidebar {
+        width: 190px;
+        padding: 12px 10px;
+    }
+
+    .sidebar a {
+        padding: 10px;
+
+        font-size: 12px;
+    }
 }
