@@ -42,8 +42,20 @@ function JoinGame() {
 
     useEffect(() => {
         const handleJoinedRoom = (data) => {
-            if (!data.success) {
+            console.log("JOINED ROOM DATA:", data);
+
+            if (!data || !data.success) {
                 setLoading(false);
+                setError(
+                    data?.message ||
+                    "Не удалось войти в комнату."
+                );
+                return;
+            }
+
+            if (!data.player) {
+                setLoading(false);
+                setError("Сервер не вернул данные игрока.");
                 return;
             }
 
@@ -52,7 +64,9 @@ function JoinGame() {
                 JSON.stringify(data.player)
             );
 
-            navigate(`/room/${code.trim().toUpperCase()}`);
+            navigate(
+                `/room/${code.trim().toUpperCase()}`
+            );
         };
 
         const handleSocketError = (data) => {

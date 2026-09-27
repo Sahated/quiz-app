@@ -120,7 +120,7 @@ function registerGameSocket(io) {
                     };
                 }
 
-                const isOwner = await roomService.isOwner(
+                const isOwner = await roomService.isHost(
                     code,
                     socket.user.id
                 );
@@ -163,7 +163,8 @@ function registerGameSocket(io) {
                     await roomService.joinSocket(
                         code,
                         nickname,
-                        socket.id
+                        socket.id,
+                        socket.user?.id || null
                     );
                     
                 // Привязываем Socket.IO-соединение к игроку
@@ -210,7 +211,7 @@ function registerGameSocket(io) {
                     };
                 }
 
-                const isOwner = await roomService.isOwner(
+                const isOwner = await roomService.isHost(
                     code,
                     socket.user.id
                 );
@@ -276,7 +277,7 @@ function registerGameSocket(io) {
                     };
                 }
 
-                const isOwner = await roomService.isOwner(
+                const isOwner = await roomService.isHost(
                     code,
                     socket.user.id
                 );

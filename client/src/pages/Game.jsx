@@ -14,19 +14,21 @@ function Game() {
 
     const [question, setQuestion] = useState(null);
     const [timeLeft, setTimeLeft] = useState(0);
+    const [room, setRoom] = useState(null);
 
     const [selectedAnswers, setSelectedAnswers] = useState([]);
     const [answerSubmitted, setAnswerSubmitted] = useState(false);
+
+    const isHost =
+        user?.id != null &&
+        room?.host?.id != null &&
+        Number(user.id) === Number(room.host.id);
 
     const player = JSON.parse(
         sessionStorage.getItem("player") || "null"
     );
 
-    const isHost = !!user && !player;
-
-    /*
-     * Выбор ответа
-     */
+    // Выбор ответа
     const handleAnswerSelect = (answer) => {
         if (!player) {
             return;
@@ -56,9 +58,7 @@ function Game() {
         setSelectedAnswers([answer]);
     };
 
-    /*
-     * Отправка ответа
-     */
+    // Отправка ответа
     const handleSubmitAnswer = () => {
         if (!player) {
             return;
@@ -86,9 +86,9 @@ function Game() {
         });
     };
 
-    /*
-     * Завершение игры организатором
-     */
+
+    // Завершение игры организатором
+
     const handleFinishGame = () => {
         const confirmed = window.confirm(
             "Вы уверены, что хотите завершить игру?"
@@ -103,23 +103,46 @@ function Game() {
         });
     };
 
-    /*
-     * Socket.IO
-     */
+    useEffect(() => {
+        const loadRoom = async () => {
+            try {
+                const response = await roomService.getRoom(code);
+                setRoom(response.data.data);
+            } catch (err) {
+                console.error(
+                    "Не удалось загрузить комнату:",
+                    err
+                );
+            }
+        };
+
+        loadRoom();
+    }, [code]);
+
+    useEffect(() => {
+        if (isHost) {
+            sessionStorage.removeItem("player");
+        }
+    }, [isHost]);
+
+    // Socket.IO
     useEffect(() => {
         if (!socket.connected) {
             connectSocket();
         }
 
         const joinGameRoom = () => {
+            if (isHost) {
+                socket.emit("join-host", {
+                    code
+                });
+                return;
+            }
+
             if (player) {
                 socket.emit("join-room", {
                     code,
                     nickname: player.nickname
-                });
-            } else if (user) {
-                socket.emit("join-host", {
-                    code
                 });
             }
         };
@@ -149,17 +172,15 @@ function Game() {
             socket.off("game-finished", handleGameFinished);
             socket.off("connect", joinGameRoom);
         };
-    }, [code, navigate, user]);
+    }, [code, navigate, user, isHost, player?.nickname]);
 
-    /*
-     * Восстановление состояния игры
-     */
+    // Восстановление состояния игры
     useEffect(() => {
         const loadGameState = async () => {
             try {
                 const response = await roomService.getGameState(
                     code,
-                    player?.id
+                    isHost ? null : player?.id
                 );
 
                 const gameState = response.data.data;
@@ -186,11 +207,9 @@ function Game() {
         if (!question) {
             loadGameState();
         }
-    }, [code, navigate, question, player?.id]);
+    }, [code, navigate, question, player?.id, isHost]);
 
-    /*
-     * Таймер
-     */
+    // Таймер
     useEffect(() => {
         if (timeLeft <= 0) {
             return;
@@ -206,9 +225,7 @@ function Game() {
     const answerDisabled =
         answerSubmitted || timeLeft <= 0 || isHost;
 
-    /*
-     * CSS-класс варианта ответа
-     */
+    // CSS-класс варианта ответа
     const getAnswerClass = (answer) => {
         let className = "answer-button";
 
@@ -223,9 +240,9 @@ function Game() {
         return className;
     };
 
-    /*
-     * Данные вариантов
-     */
+
+    // Данные вариантов
+
     const answers = [
         {
             letter: "A",

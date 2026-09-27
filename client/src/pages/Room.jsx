@@ -17,7 +17,10 @@ function Room() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const isOwner = user?.id === room?.quiz?.ownerId;
+    const isHost =
+        user?.id != null &&
+        room?.host?.id != null &&
+        Number(user.id) === Number(room.host.id);
 
     const loadRoom = async () => {
         try {
@@ -38,6 +41,7 @@ function Room() {
 
             setRoom(roomData);
             setPlayers(roomData.players || []);
+
         } catch (err) {
             setError(
                 err.response?.data?.message ||
@@ -119,14 +123,14 @@ function Room() {
     }, [code, navigate]);
 
     useEffect(() => {
-        if (!room || !isOwner) {
+        if (!room || !isHost) {
             return;
         }
 
         socket.emit("join-host", {
             code,
         });
-    }, [room, isOwner, code]);
+    }, [room, isHost, code]);
 
     useEffect(() => {
         const handleJoinedHost = (data) => {
@@ -193,7 +197,7 @@ function Room() {
                         </h1>
 
                         <p>
-                            {isOwner
+                            {isHost
                                 ? "Ожидание участников перед началом игры"
                                 : "Вы присоединились к игре"}
                         </p>
@@ -277,7 +281,7 @@ function Room() {
                         )}
                     </div>
 
-                    {isOwner ? (
+                    {isHost ? (
                         <div className="host-panel">
                             <div>
                                 <h2>Всё готово?</h2>

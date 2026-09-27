@@ -55,9 +55,11 @@ class RoomService {
         const room = await prisma.room.create({
             data: {
                 code,
-                quizId: Number(quizId)
+                quizId: Number(quizId),
+                hostId: Number(userId)
             }
         });
+
         return room;
     }
 
@@ -129,6 +131,12 @@ class RoomService {
 
             include: {
                 quiz: true,
+                host: {
+                    select: {
+                        id: true,
+                        username: true
+                    }
+                },
                 players: {
                     orderBy: {
                         score: "desc"
@@ -200,7 +208,7 @@ class RoomService {
         };
     }
 
-    async joinSocket(code, nickname, socketId) {
+    async joinSocket(code, nickname, socketId, userId = null) {
         if (!code || !nickname) {
             throw {
                 status: 400,
@@ -242,15 +250,31 @@ class RoomService {
             };
         }
 
-        // Если игрок уже существует — обновляем socketId
+        // Если игрок уже существует
         if (player) {
+
+            // Если игрок уже привязан к другому аккаунту,
+            // нельзя подключаться к нему под тем же ником
+            if (
+                player.userId &&
+                userId &&
+                player.userId !== Number(userId)
+            ) {
+                throw {
+                    status: 400,
+                    message: "Такой ник уже используется другим пользователем."
+                };
+            }
 
             player = await prisma.player.update({
                 where: {
                     id: player.id
                 },
                 data: {
-                    socketId
+                    socketId,
+                    ...(userId
+                        ? { userId: Number(userId) }
+                        : {})
                 }
             });
 
@@ -261,12 +285,13 @@ class RoomService {
                 data: {
                     nickname,
                     roomId: room.id,
-                    socketId
+                    socketId,
+                    userId: userId
+                        ? Number(userId)
+                        : null
                 }
             });
-
         }
-
         return {
             room,
             player
@@ -282,14 +307,15 @@ class RoomService {
             orderBy: {
                 score: "desc"
             }
+        
         });
+        
     }
 
-    async isOwner(code, userId) {
+    async isHost(code, userId) {
         const room = await prisma.room.findUnique({
-            where: { code },
-            include: {
-                quiz: true
+            where: {
+                code
             }
         });
 
@@ -300,7 +326,7 @@ class RoomService {
             };
         }
 
-        return room.quiz.ownerId === Number(userId);
+        return room.hostId === Number(userId);
     }
 }
 

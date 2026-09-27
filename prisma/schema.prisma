@@ -13,6 +13,11 @@ enum QuestionType {
   MULTIPLE
 }
 
+enum HistoryRole {
+  HOST
+  PLAYER
+}
+
 model User {
   id           Int    @id @default(autoincrement())
   username     String @unique
@@ -21,21 +26,26 @@ model User {
 
   quizzes Quiz[]
   players Player[]
+  rooms   Room[]
+  history GameHistory[]
 
   createdAt DateTime @default(now())
 }
 
 model Quiz {
-  id               Int        @id @default(autoincrement())
+  id               Int     @id @default(autoincrement())
   title            String
   category         String?
   rules            String?
-  defaultTimeLimit Int        @default(20)
+  defaultTimeLimit Int     @default(20)
   ownerId          Int
-  owner            User       @relation(fields: [ownerId], references: [id])
-  questions        Question[]
-  rooms            Room[]
-  createdAt        DateTime   @default(now())
+
+  owner     User          @relation(fields: [ownerId], references: [id])
+  questions Question[]
+  rooms     Room[]
+  history   GameHistory[]
+
+  createdAt DateTime @default(now())
 }
 
 model Question {
@@ -66,13 +76,16 @@ model Room {
   id                Int       @id @default(autoincrement())
   code              String    @unique
   quizId            Int
+  hostId            Int
   isStarted         Boolean   @default(false)
   finished          Boolean   @default(false)
   currentQuestion   Int       @default(0)
   questionStartedAt DateTime?
 
-  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  players   Player[]
+  quiz    Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  host    User     @relation(fields: [hostId], references: [id])
+  players Player[]
+
   createdAt DateTime @default(now())
 }
 
@@ -104,4 +117,23 @@ model Answer {
   player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
   question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
   createdAt  DateTime @default(now())
+}
+
+model GameHistory {
+  id Int @id @default(autoincrement())
+
+  userId Int
+  quizId Int
+
+  quizTitle String
+  role      HistoryRole
+
+  roomCode String
+  score    Int
+  place    Int
+
+  playedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
 }

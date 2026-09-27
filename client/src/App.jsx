@@ -10,14 +10,16 @@ import Game from "./pages/Game";
 import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
 import JoinGame from "./pages/JoinGame";
+import History from "./pages/History";
 
 import MainLayout from "./layouts/MainLayout";
 import GameLayout from "./layouts/GameLayout";
 
+
 function App() {
     return (
         <Routes>
-
+            
             {/* Public pages */}
 
             <Route
@@ -35,8 +37,7 @@ function App() {
                 element={<JoinGame />}
             />
 
-
-            {/* Organizer pages */}
+            {/* Authenticated user pages */}
 
             <Route element={<MainLayout />}>
 
@@ -49,6 +50,10 @@ function App() {
                     path="/quiz/:id"
                     element={<QuizEditor />}
                 />
+
+                <Route
+                    path="/history" 
+                    element={<History />} />
 
             </Route>
 

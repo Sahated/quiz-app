@@ -233,8 +233,49 @@ class GameService {
     }
 
     async finishGame(code) {
+        const room = await prisma.room.findUnique({
+            where: {
+                code
+            },
+            include: {
+                quiz: {
+                    select: {
+                        id: true,
+                        title: true
+                    }
+                },
+                host: {
+                    select: {
+                        id: true
+                    }
+                },
+                players: {
+                    where: {
+                        userId: {
+                            not: null
+                        }
+                    },
+                    orderBy: {
+                        score: "desc"
+                    },
+                    select: {
+                        id: true,
+                        userId: true,
+                        score: true
+                    }
+                }
+            }
+        });
 
-        const room = await prisma.room.update({
+        if (!room) {
+            throw {
+                status: 404,
+                message: "Комната не найдена."
+            };
+        }
+
+        // Завершаем комнату
+        const finishedRoom = await prisma.room.update({
             where: {
                 code
             },
@@ -244,7 +285,63 @@ class GameService {
             }
         });
 
-        return room;
+        // История организатора
+        const existingHostHistory =
+            await prisma.gameHistory.findFirst({
+                where: {
+                    userId: room.host.id,
+                    roomCode: room.code,
+                    role: "HOST"
+                }
+            });
+
+        if (!existingHostHistory) {
+            await prisma.gameHistory.create({
+                data: {
+                    userId: room.host.id,
+                    quizId: room.quiz.id,
+                    quizTitle: room.quiz.title,
+                    role: "HOST",
+                    roomCode: room.code,
+                    score: 0,
+                    place: 0,
+                    playedAt: room.createdAt
+                }
+            });
+        }
+
+        // История игроков
+        for (let index = 0; index < room.players.length; index++) {
+            const player = room.players[index];
+
+            const existingPlayerHistory =
+                await prisma.gameHistory.findFirst({
+                    where: {
+                        userId: player.userId,
+                        roomCode: room.code,
+                        role: "PLAYER"
+                    }
+                });
+
+            if (existingPlayerHistory) {
+                continue;
+            }
+
+            await prisma.gameHistory.create({
+                data: {
+                    userId: player.userId,
+                    quizId: room.quiz.id,
+                    quizTitle: room.quiz.title,
+                    role: "PLAYER",
+                    roomCode: room.code,
+                    score: player.score,
+                    place: index + 1,
+                    playedAt: room.createdAt
+                }
+            });
+        }
+
+        return finishedRoom;
     }
 
     async getGameState(code, playerId) {
