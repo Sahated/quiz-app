@@ -16,8 +16,11 @@ api.interceptors.request.use((config) => {
         config.headers.Authorization = `Bearer ${token}`;
     }
 
-    return config;
+    if (config.data instanceof FormData) {
+        delete config.headers["Content-Type"];
+    }
 
+    return config;
 });
 
 export default api;

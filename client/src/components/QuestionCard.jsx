@@ -1,4 +1,6 @@
 function QuestionCard({ question, onEdit, onDelete }) {
+    const isMultiple = question.type === "MULTIPLE";
+
     return (
         <article className="question-card">
 
@@ -32,9 +34,24 @@ function QuestionCard({ question, onEdit, onDelete }) {
 
             <div className="question-card-content">
 
+                <div className="question-type-badge">
+                    {isMultiple
+                        ? "Несколько правильных ответов"
+                        : "Один правильный ответ"}
+                </div>
+
                 <h3>
                     {question.text}
                 </h3>
+
+                {question.imageUrl && (
+                    <div className="question-card-image">
+                        <img
+                            src={`http://localhost:3000${question.imageUrl}`}
+                            alt="Изображение вопроса"
+                        />
+                    </div>
+                )}
 
                 <div className="options">
 

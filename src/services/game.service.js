@@ -1,5 +1,68 @@
 const prisma = require("../prisma");
 
+const VALID_ANSWERS = ["A", "B", "C", "D"];
+
+function normalizeAnswers(value) {
+
+    if (Array.isArray(value)) {
+        return [...new Set(
+            value
+                .map((answer) => String(answer).trim().toUpperCase())
+                .filter(Boolean)
+        )].sort();
+    }
+
+    if (typeof value === "string") {
+        return [...new Set(
+            value
+                .split(",")
+                .map((answer) => answer.trim().toUpperCase())
+                .filter(Boolean)
+        )].sort();
+    }
+
+    return [];
+}
+
+function isAnswerCorrect(userAnswer, correctAnswer, questionType) {
+
+    const userAnswers = normalizeAnswers(userAnswer);
+    const correctAnswers = normalizeAnswers(correctAnswer);
+
+    if (userAnswers.length === 0) {
+        return false;
+    }
+
+    const hasInvalidAnswer = userAnswers.some(
+        (answer) => !VALID_ANSWERS.includes(answer)
+    );
+
+    if (hasInvalidAnswer) {
+        return false;
+    }
+
+    if (questionType === "SINGLE") {
+        return (
+            userAnswers.length === 1 &&
+            correctAnswers.length === 1 &&
+            userAnswers[0] === correctAnswers[0]
+        );
+    }
+
+    if (questionType === "MULTIPLE") {
+
+        if (userAnswers.length !== correctAnswers.length) {
+            return false;
+        }
+
+        return userAnswers.every(
+            (answer, index) => answer === correctAnswers[index]
+        );
+    }
+
+    return false;
+}
+
 class GameService {
 
     async startGame(code) {
@@ -34,7 +97,7 @@ class GameService {
                 message: "Игра уже запущена."
             };
         }
-        
+
         if (room.quiz.questions.length === 0) {
             throw {
                 status: 400,
@@ -60,7 +123,9 @@ class GameService {
         });
 
         await prisma.room.update({
-            where: { id: room.id },
+            where: {
+                id: room.id
+            },
             data: {
                 isStarted: true,
                 currentQuestion: 0,
@@ -68,7 +133,7 @@ class GameService {
                 questionStartedAt: new Date()
             }
         });
-        
+
         return {
             room,
             question: room.quiz.questions[0]
@@ -140,18 +205,24 @@ class GameService {
         const nextIndex = room.currentQuestion + 1;
 
         if (nextIndex >= room.quiz.questions.length) {
+
             await prisma.room.update({
-                where: { id: room.id },
+                where: {
+                    id: room.id
+                },
                 data: {
                     finished: true,
                     questionStartedAt: null
                 }
             });
+
             return null;
         }
 
         await prisma.room.update({
-            where: { id: room.id },
+            where: {
+                id: room.id
+            },
             data: {
                 currentQuestion: nextIndex,
                 questionStartedAt: new Date()
@@ -162,8 +233,11 @@ class GameService {
     }
 
     async finishGame(code) {
+
         const room = await prisma.room.update({
-            where: { code },
+            where: {
+                code
+            },
             data: {
                 finished: true,
                 questionStartedAt: null
@@ -219,6 +293,7 @@ class GameService {
             !room.finished &&
             room.questionStartedAt
         ) {
+
             const elapsedSeconds = Math.floor(
                 (Date.now() - room.questionStartedAt.getTime()) / 1000
             );
@@ -248,9 +323,14 @@ class GameService {
             isStarted: room.isStarted,
             timeLeft,
             answered,
+
+            // ВАЖНО:
+            // correctAnswer здесь специально отсутствует.
             question: {
                 id: question.id,
                 text: question.text,
+                imageUrl: question.imageUrl,
+                type: question.type,
                 optionA: question.optionA,
                 optionB: question.optionB,
                 optionC: question.optionC,
@@ -320,7 +400,7 @@ class GameService {
                 message: "Игра ещё не началась."
             };
         }
-        
+
         if (room.finished) {
             throw {
                 status: 400,
@@ -339,6 +419,7 @@ class GameService {
         }
 
         if (room.questionStartedAt) {
+
             const elapsedSeconds = Math.floor(
                 (Date.now() - room.questionStartedAt.getTime()) / 1000
             );
@@ -380,60 +461,81 @@ class GameService {
             };
         }
 
-        const isCorrect =
-            answer === question.correctAnswer;
+        const normalizedAnswer =
+            normalizeAnswers(answer);
+
+        if (normalizedAnswer.length === 0) {
+            throw {
+                status: 400,
+                message: "Необходимо выбрать ответ."
+            };
+        }
+
+        const hasInvalidAnswer =
+            normalizedAnswer.some(
+                (item) => !VALID_ANSWERS.includes(item)
+            );
+
+        if (hasInvalidAnswer) {
+            throw {
+                status: 400,
+                message: "Недопустимый вариант ответа."
+            };
+        }
+
+        if (
+            question.type === "SINGLE" &&
+            normalizedAnswer.length !== 1
+        ) {
+            throw {
+                status: 400,
+                message: "Необходимо выбрать только один вариант."
+            };
+        }
+
+        const isCorrect = isAnswerCorrect(
+            normalizedAnswer,
+            question.correctAnswer,
+            question.type
+        );
+
+        const storedAnswer =
+            normalizedAnswer.join(",");
 
         await prisma.answer.create({
-
             data: {
-
                 playerId: player.id,
-
                 questionId: question.id,
-
-                answer,
-
+                answer: storedAnswer,
                 isCorrect
-
             }
-
         });
 
         if (isCorrect) {
 
             await prisma.player.update({
-
                 where: {
                     id: player.id
                 },
-
                 data: {
                     score: {
                         increment: 100
                     }
                 }
-
             });
-
         }
 
         const updatedPlayer =
             await prisma.player.findUnique({
-
                 where: {
                     id: player.id
                 }
-
             });
 
         return {
-
             correct: isCorrect,
-
             score: updatedPlayer.score
-
         };
-
     }
 }
 

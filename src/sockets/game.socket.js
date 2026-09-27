@@ -1,3 +1,5 @@
+const prisma = require("../prisma");
+
 const roomService = require("../services/room.service");
 const gameService = require("../services/game.service");
 
@@ -41,6 +43,8 @@ function registerGameSocket(io) {
             const publicQuestion = {
                 id: question.id,
                 text: question.text,
+                imageUrl: question.imageUrl,
+                type: question.type,
                 optionA: question.optionA,
                 optionB: question.optionB,
                 optionC: question.optionC,

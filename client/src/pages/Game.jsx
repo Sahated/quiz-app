@@ -15,7 +15,7 @@ function Game() {
     const [question, setQuestion] = useState(null);
     const [timeLeft, setTimeLeft] = useState(0);
 
-    const [selectedAnswer, setSelectedAnswer] = useState(null);
+    const [selectedAnswers, setSelectedAnswers] = useState([]);
     const [answerSubmitted, setAnswerSubmitted] = useState(false);
 
     const player = JSON.parse(
@@ -24,7 +24,10 @@ function Game() {
 
     const isHost = !!user && !player;
 
-    const handleAnswer = (answer) => {
+    /*
+     * Выбор ответа
+     */
+    const handleAnswerSelect = (answer) => {
         if (!player) {
             return;
         }
@@ -37,15 +40,55 @@ function Game() {
             return;
         }
 
-        setSelectedAnswer(answer);
+        if (question.type === "MULTIPLE") {
+            setSelectedAnswers((prev) => {
+                if (prev.includes(answer)) {
+                    return prev.filter((item) => item !== answer);
+                }
+
+                return [...prev, answer].sort();
+            });
+
+            return;
+        }
+
+        // SINGLE
+        setSelectedAnswers([answer]);
+    };
+
+    /*
+     * Отправка ответа
+     */
+    const handleSubmitAnswer = () => {
+        if (!player) {
+            return;
+        }
+
+        if (answerSubmitted) {
+            return;
+        }
+
+        if (timeLeft <= 0) {
+            return;
+        }
+
+        if (selectedAnswers.length === 0) {
+            return;
+        }
+
+        const answer = selectedAnswers.join(",");
+
         setAnswerSubmitted(true);
 
         socket.emit("submit-answer", {
             code,
-            answer,
+            answer
         });
     };
 
+    /*
+     * Завершение игры организатором
+     */
     const handleFinishGame = () => {
         const confirmed = window.confirm(
             "Вы уверены, что хотите завершить игру?"
@@ -56,10 +99,13 @@ function Game() {
         }
 
         socket.emit("finish-game", {
-            code,
+            code
         });
     };
 
+    /*
+     * Socket.IO
+     */
     useEffect(() => {
         if (!socket.connected) {
             connectSocket();
@@ -69,11 +115,11 @@ function Game() {
             if (player) {
                 socket.emit("join-room", {
                     code,
-                    nickname: player.nickname,
+                    nickname: player.nickname
                 });
             } else if (user) {
                 socket.emit("join-host", {
-                    code,
+                    code
                 });
             }
         };
@@ -87,7 +133,7 @@ function Game() {
         const handleQuestionStart = (data) => {
             setQuestion(data.question);
             setTimeLeft(data.question.timeLimit);
-            setSelectedAnswer(null);
+            setSelectedAnswers([]);
             setAnswerSubmitted(false);
         };
 
@@ -103,8 +149,11 @@ function Game() {
             socket.off("game-finished", handleGameFinished);
             socket.off("connect", joinGameRoom);
         };
-    }, [code, navigate, player, user]);
+    }, [code, navigate, user]);
 
+    /*
+     * Восстановление состояния игры
+     */
     useEffect(() => {
         const loadGameState = async () => {
             try {
@@ -125,6 +174,7 @@ function Game() {
                     setTimeLeft(gameState.timeLeft);
                     setAnswerSubmitted(gameState.answered);
                 }
+
             } catch (err) {
                 console.error(
                     "Не удалось восстановить состояние игры:",
@@ -136,8 +186,11 @@ function Game() {
         if (!question) {
             loadGameState();
         }
-    }, [code, navigate, question]);
+    }, [code, navigate, question, player?.id]);
 
+    /*
+     * Таймер
+     */
     useEffect(() => {
         if (timeLeft <= 0) {
             return;
@@ -151,12 +204,15 @@ function Game() {
     }, [timeLeft]);
 
     const answerDisabled =
-        answerSubmitted || timeLeft <= 0;
+        answerSubmitted || timeLeft <= 0 || isHost;
 
+    /*
+     * CSS-класс варианта ответа
+     */
     const getAnswerClass = (answer) => {
         let className = "answer-button";
 
-        if (selectedAnswer === answer) {
+        if (selectedAnswers.includes(answer)) {
             className += " selected";
         }
 
@@ -166,6 +222,28 @@ function Game() {
 
         return className;
     };
+
+    /*
+     * Данные вариантов
+     */
+    const answers = [
+        {
+            letter: "A",
+            text: question?.optionA
+        },
+        {
+            letter: "B",
+            text: question?.optionB
+        },
+        {
+            letter: "C",
+            text: question?.optionC
+        },
+        {
+            letter: "D",
+            text: question?.optionD
+        }
+    ];
 
     if (!question) {
         return (
@@ -184,6 +262,8 @@ function Game() {
             </div>
         );
     }
+
+    const isMultiple = question.type === "MULTIPLE";
 
     return (
         <div className="game-page">
@@ -226,6 +306,7 @@ function Game() {
                     <div className="host-toolbar">
                         <div>
                             <strong>Режим организатора</strong>
+
                             <span>
                                 Вы наблюдаете за ходом игры
                             </span>
@@ -244,6 +325,7 @@ function Game() {
                 <main className="game-content">
 
                     <div className="question-progress">
+
                         <span>
                             Вопрос {question.order}
                         </span>
@@ -260,116 +342,93 @@ function Game() {
                                     Время вышло
                                 </span>
                             )}
+
                     </div>
 
                     <section className="question-card">
+
+                        <div className="question-type-label">
+                            {isMultiple
+                                ? "Выберите несколько вариантов"
+                                : "Выберите один вариант"}
+                        </div>
 
                         <h1>
                             {question.text}
                         </h1>
 
+                        {question.imageUrl && (
+                            <div className="game-question-image">
+                                <img
+                                    src={`http://localhost:3000${question.imageUrl}`}
+                                    alt="Изображение вопроса"
+                                />
+                            </div>
+                        )}
+
                         <div className="answers">
 
-                            <button
-                                type="button"
-                                className={getAnswerClass("A")}
-                                onClick={() =>
-                                    handleAnswer("A")
-                                }
-                                disabled={answerDisabled}
-                            >
-                                <span className="answer-letter">
-                                    A
-                                </span>
-
-                                <span className="answer-text">
-                                    {question.optionA}
-                                </span>
-
-                                {selectedAnswer === "A" && (
-                                    <span className="answer-check">
-                                        ✓
+                            {answers.map((answer) => (
+                                <button
+                                    key={answer.letter}
+                                    type="button"
+                                    className={getAnswerClass(
+                                        answer.letter
+                                    )}
+                                    onClick={() =>
+                                        handleAnswerSelect(
+                                            answer.letter
+                                        )
+                                    }
+                                    disabled={answerDisabled}
+                                >
+                                    <span
+                                        className={`answer-selector ${
+                                            isMultiple
+                                                ? "checkbox"
+                                                : "radio"
+                                        }`}
+                                    >
+                                        {selectedAnswers.includes(
+                                            answer.letter
+                                        ) && "✓"}
                                     </span>
-                                )}
-                            </button>
 
-                            <button
-                                type="button"
-                                className={getAnswerClass("B")}
-                                onClick={() =>
-                                    handleAnswer("B")
-                                }
-                                disabled={answerDisabled}
-                            >
-                                <span className="answer-letter">
-                                    B
-                                </span>
-
-                                <span className="answer-text">
-                                    {question.optionB}
-                                </span>
-
-                                {selectedAnswer === "B" && (
-                                    <span className="answer-check">
-                                        ✓
+                                    <span className="answer-letter">
+                                        {answer.letter}
                                     </span>
-                                )}
-                            </button>
 
-                            <button
-                                type="button"
-                                className={getAnswerClass("C")}
-                                onClick={() =>
-                                    handleAnswer("C")
-                                }
-                                disabled={answerDisabled}
-                            >
-                                <span className="answer-letter">
-                                    C
-                                </span>
-
-                                <span className="answer-text">
-                                    {question.optionC}
-                                </span>
-
-                                {selectedAnswer === "C" && (
-                                    <span className="answer-check">
-                                        ✓
+                                    <span className="answer-text">
+                                        {answer.text}
                                     </span>
-                                )}
-                            </button>
-
-                            <button
-                                type="button"
-                                className={getAnswerClass("D")}
-                                onClick={() =>
-                                    handleAnswer("D")
-                                }
-                                disabled={answerDisabled}
-                            >
-                                <span className="answer-letter">
-                                    D
-                                </span>
-
-                                <span className="answer-text">
-                                    {question.optionD}
-                                </span>
-
-                                {selectedAnswer === "D" && (
-                                    <span className="answer-check">
-                                        ✓
-                                    </span>
-                                )}
-                            </button>
+                                </button>
+                            ))}
 
                         </div>
 
                         {!answerSubmitted &&
                             timeLeft > 0 &&
                             !isHost && (
-                                <p className="answer-hint">
-                                    Выберите один вариант ответа
-                                </p>
+                                <>
+                                    <p className="answer-hint">
+                                        {isMultiple
+                                            ? "Можно выбрать несколько вариантов ответа"
+                                            : "Выберите один вариант ответа"}
+                                    </p>
+
+                                    <button
+                                        type="button"
+                                        className="submit-answer-button"
+                                        onClick={
+                                            handleSubmitAnswer
+                                        }
+                                        disabled={
+                                            selectedAnswers.length === 0
+                                        }
+                                    >
+                                        Ответить
+                                    </button>
+                                </>
                             )}
 
                         {answerSubmitted && (
@@ -399,7 +458,8 @@ function Game() {
                                         </strong>
 
                                         <p>
-                                            Дождитесь следующего вопроса.
+                                            Дождитесь следующего
+                                            вопроса.
                                         </p>
                                     </div>
                                 </div>
@@ -410,6 +470,7 @@ function Game() {
                 </main>
 
             </div>
+
         </div>
     );
 }

@@ -4,78 +4,104 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // Если пишет ошибку, то это из-за того, что IDE проверяет код по другой версии prisma (запускается и ладно)
   url      = env("DATABASE_URL")
 }
 
+enum QuestionType {
+  SINGLE
+  MULTIPLE
+}
+
 model User {
-  id           Int      @id @default(autoincrement())
-  username     String   @unique
-  email        String   @unique
+  id           Int    @id @default(autoincrement())
+  username     String @unique
+  email        String @unique
   passwordHash String
 
-  quizzes      Quiz[]
+  quizzes Quiz[]
+  players Player[]
 
-  createdAt    DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Quiz {
-  id          Int      @id @default(autoincrement())
-  title       String
-  ownerId     Int
-  owner        User      @relation(fields: [ownerId], references: [id])
-  questions    Question[]
-  rooms        Room[]
-  createdAt    DateTime @default(now())
+  id               Int        @id @default(autoincrement())
+  title            String
+  category         String?
+  rules            String?
+  defaultTimeLimit Int        @default(20)
+  ownerId          Int
+  owner            User       @relation(fields: [ownerId], references: [id])
+  questions        Question[]
+  rooms            Room[]
+  createdAt        DateTime   @default(now())
 }
 
 model Question {
-  id            Int      @id @default(autoincrement())
-  text          String
-  optionA       String
-  optionB       String
-  optionC       String
-  optionD       String
+  id       Int     @id @default(autoincrement())
+  text     String
+  imageUrl String?
+
+  type QuestionType @default(SINGLE)
+
+  optionA String
+  optionB String
+  optionC String
+  optionD String
+
   correctAnswer String
   timeLimit     Int
-  quizId        Int
-  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  answers       Answer[]
-  order Int @default(1)
-  createdAt    DateTime @default(now())
+
+  quizId Int
+  quiz   Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  answers Answer[]
+
+  order     Int      @default(1)
+  createdAt DateTime @default(now())
 }
 
 model Room {
-  id                Int      @id @default(autoincrement())
-  code              String   @unique
+  id                Int       @id @default(autoincrement())
+  code              String    @unique
   quizId            Int
-  isStarted         Boolean  @default(false)
-  finished          Boolean  @default(false)
-  currentQuestion   Int      @default(0)
+  isStarted         Boolean   @default(false)
+  finished          Boolean   @default(false)
+  currentQuestion   Int       @default(0)
   questionStartedAt DateTime?
 
-  quiz              Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  players           Player[]
-  createdAt         DateTime @default(now())
-}
-model Player {
-  id           Int      @id @default(autoincrement())
-  nickname     String
-  score        Int @default(0)
-  roomId       Int
-  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  answers     Answer[]
-  socketId    String?
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  players   Player[]
   createdAt DateTime @default(now())
+}
+
+model Player {
+  id       Int    @id @default(autoincrement())
+  nickname String
+  score    Int    @default(0)
+
+  roomId Int
+  room   Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  userId Int?
+  user   User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  answers  Answer[]
+  socketId String?
+
+  createdAt DateTime @default(now())
+
   @@unique([roomId, nickname])
 }
 
 model Answer {
-  id            Int      @id @default(autoincrement())
-  playerId      Int
-  questionId    Int
-  answer        String
-  isCorrect     Boolean
-  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  playerId   Int
+  questionId Int
+  answer     String
+  isCorrect  Boolean
+  player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
 }

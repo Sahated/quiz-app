@@ -1,5 +1,72 @@
 const prisma = require("../prisma");
 
+const VALID_ANSWERS = ["A", "B", "C", "D"];
+const VALID_TYPES = ["SINGLE", "MULTIPLE"];
+
+function normalizeAnswers(value) {
+    if (Array.isArray(value)) {
+        return value
+            .map((answer) => String(answer).trim().toUpperCase())
+            .filter(Boolean);
+    }
+
+    if (typeof value === "string") {
+        return value
+            .split(",")
+            .map((answer) => answer.trim().toUpperCase())
+            .filter(Boolean);
+    }
+
+    return [];
+}
+
+function validateCorrectAnswers(value, type) {
+    if (!VALID_TYPES.includes(type)) {
+        throw {
+            status: 400,
+            message: "Тип вопроса должен быть SINGLE или MULTIPLE."
+        };
+    }
+
+    const answers = normalizeAnswers(value);
+
+    if (answers.length === 0) {
+        throw {
+            status: 400,
+            message: "Не указан правильный ответ."
+        };
+    }
+
+    const uniqueAnswers = [...new Set(answers)];
+
+    const hasInvalidAnswer = uniqueAnswers.some(
+        (answer) => !VALID_ANSWERS.includes(answer)
+    );
+
+    if (hasInvalidAnswer) {
+        throw {
+            status: 400,
+            message: "Ответ должен содержать только A, B, C или D."
+        };
+    }
+
+    if (type === "SINGLE" && uniqueAnswers.length !== 1) {
+        throw {
+            status: 400,
+            message: "Для вопроса с одним ответом необходимо выбрать один вариант."
+        };
+    }
+
+    if (type === "MULTIPLE" && uniqueAnswers.length < 2) {
+        throw {
+            status: 400,
+            message: "Для вопроса с несколькими ответами необходимо выбрать минимум два варианта."
+        };
+    }
+
+    return uniqueAnswers.sort().join(",");
+}
+
 class QuestionService {
 
     async create(data, userId) {
@@ -7,13 +74,14 @@ class QuestionService {
         const {
             quizId,
             text,
+            imageUrl,
+            type = "SINGLE",
             optionA,
             optionB,
             optionC,
             optionD,
             correctAnswer,
-            timeLimit,
-            order
+            timeLimit
         } = data;
 
         if (
@@ -22,8 +90,7 @@ class QuestionService {
             !optionA ||
             !optionB ||
             !optionC ||
-            !optionD ||
-            !correctAnswer
+            !optionD
         ) {
             throw {
                 status: 400,
@@ -31,14 +98,10 @@ class QuestionService {
             };
         }
 
-        const validAnswers = ["A", "B", "C", "D"];
+        const questionType = String(type).toUpperCase();
 
-        if (!validAnswers.includes(correctAnswer)) {
-            throw {
-                status: 400,
-                message: "Правильный ответ должен быть A, B, C или D."
-            };
-        }
+        const normalizedCorrectAnswer =
+            validateCorrectAnswers(correctAnswer, questionType);
 
         const time = Number(timeLimit) || 20;
 
@@ -62,27 +125,31 @@ class QuestionService {
                 message: "Викторина не найдена."
             };
         }
-        
-    const lastQuestion = await prisma.question.findFirst({
-        where: {
-            quizId: Number(quizId)
-        },
-        orderBy: {
-            order: "desc"
-        }
-    });
 
-    const questionOrder = lastQuestion ? lastQuestion.order + 1 : 1;
-    
+        const lastQuestion = await prisma.question.findFirst({
+            where: {
+                quizId: Number(quizId)
+            },
+            orderBy: {
+                order: "desc"
+            }
+        });
+
+        const questionOrder = lastQuestion
+            ? lastQuestion.order + 1
+            : 1;
+
         const question = await prisma.question.create({
             data: {
                 quizId: Number(quizId),
                 text,
+                imageUrl: imageUrl || null,
+                type: questionType,
                 optionA,
                 optionB,
                 optionC,
                 optionD,
-                correctAnswer,
+                correctAnswer: normalizedCorrectAnswer,
                 timeLimit: time,
                 order: questionOrder
             }
@@ -115,7 +182,6 @@ class QuestionService {
                 order: "asc"
             }
         });
-
     }
 
     async getOne(id, userId) {
@@ -137,7 +203,6 @@ class QuestionService {
         }
 
         return question;
-
     }
 
     async update(id, data, userId) {
@@ -160,33 +225,55 @@ class QuestionService {
 
         const updateData = {};
 
-        if (data.text !== undefined)
+        if (data.text !== undefined) {
             updateData.text = data.text;
+        }
 
-        if (data.optionA !== undefined)
+        if (data.imageUrl !== undefined) {
+            updateData.imageUrl = data.imageUrl || null;
+        }
+
+        if (data.optionA !== undefined) {
             updateData.optionA = data.optionA;
+        }
 
-        if (data.optionB !== undefined)
+        if (data.optionB !== undefined) {
             updateData.optionB = data.optionB;
+        }
 
-        if (data.optionC !== undefined)
+        if (data.optionC !== undefined) {
             updateData.optionC = data.optionC;
+        }
 
-        if (data.optionD !== undefined)
+        if (data.optionD !== undefined) {
             updateData.optionD = data.optionD;
+        }
 
-        if (data.correctAnswer !== undefined) {
+        const questionType =
+            data.type !== undefined
+                ? String(data.type).toUpperCase()
+                : question.type;
 
-            const validAnswers = ["A", "B", "C", "D"];
+        if (!VALID_TYPES.includes(questionType)) {
+            throw {
+                status: 400,
+                message: "Тип вопроса должен быть SINGLE или MULTIPLE."
+            };
+        }
 
-            if (!validAnswers.includes(data.correctAnswer)) {
-                throw {
-                    status: 400,
-                    message: "Правильный ответ должен быть A, B, C или D."
-                };
-            }
+        if (data.type !== undefined) {
+            updateData.type = questionType;
+        }
 
-            updateData.correctAnswer = data.correctAnswer;
+        if (data.correctAnswer !== undefined || data.type !== undefined) {
+
+            const correctAnswer =
+                data.correctAnswer !== undefined
+                    ? data.correctAnswer
+                    : question.correctAnswer;
+
+            updateData.correctAnswer =
+                validateCorrectAnswers(correctAnswer, questionType);
         }
 
         if (data.timeLimit !== undefined) {
@@ -225,7 +312,6 @@ class QuestionService {
         });
 
         return updatedQuestion;
-
     }
 
     async delete(id, userId) {
@@ -275,9 +361,7 @@ class QuestionService {
         return {
             message: "Вопрос успешно удалён."
         };
-
     }
-
 }
 
 module.exports = new QuestionService();

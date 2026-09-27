@@ -556,3 +556,116 @@
         height: 34px;
     }
 }
+
+/* Тип вопроса */
+
+.question-type-label {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 14px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: #eef0ff;
+    color: #6366f1;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+/* Изображение вопроса */
+
+.game-question-image {
+    width: 100%;
+    margin: 20px 0 24px;
+
+    display: flex;
+    justify-content: center;
+
+    overflow: hidden;
+
+    border: 1px solid #e4e6ee;
+    border-radius: 12px;
+
+    background: #f7f8fc;
+}
+
+.game-question-image img {
+    display: block;
+
+    width: auto;
+    max-width: 100%;
+    max-height: 320px;
+
+    object-fit: contain;
+}
+
+
+/* Индикатор выбора */
+
+.answer-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 22px;
+    height: 22px;
+
+    flex-shrink: 0;
+
+    border: 2px solid #cfd2dc;
+    background: #ffffff;
+
+    color: transparent;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    transition: 0.15s ease;
+}
+
+.answer-selector.radio {
+    border-radius: 50%;
+}
+
+.answer-selector.checkbox {
+    border-radius: 6px;
+}
+
+.answer-button.selected .answer-selector {
+    border-color: #6366f1;
+    background: #6366f1;
+    color: #ffffff;
+}
+
+.answer-button.submitted {
+    cursor: default;
+}
+
+.submit-answer-button {
+    width: 100%;
+    margin-top: 20px;
+
+    padding: 14px 20px;
+
+    border: none;
+    border-radius: 10px;
+
+    background: #6366f1;
+    color: #ffffff;
+
+    font-size: 15px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: 0.15s ease;
+}
+
+.submit-answer-button:hover:not(:disabled) {
+    background: #5558e8;
+}
+
+.submit-answer-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
